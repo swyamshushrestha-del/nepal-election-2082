@@ -58,10 +58,9 @@ function CandidatePhoto({ candidate, party, size = 64 }) {
 const TABS = ['results', 'parties', 'candidates', 'news'];
 const TAB_LABELS = {
   en: { results: '📊 Live Results', parties: '🏛 Parties', candidates: '👤 Candidates', news: '📰 News' },
-  np: { results: '📊 लाइभ नतिजा', parties: '🏛 दलहरू', candidates: '👤 उम्मेदवार', news: '📰 समाचार' },
+  np: { results: '📊 नतिजा', parties: '🏛 दलहरू', candidates: '👤 उम्मेदवार', news: '📰 समाचार' }
 };
 
-// ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 export default function Home() {
   const [tab, setTab] = useState('results');
   const [lang, setLang] = useState('en');
@@ -100,7 +99,7 @@ export default function Home() {
     margin: 'Margin',
     declared: 'Declared',
     leading: 'Leading',
-    noData: 'Vote counting in progress — no official data yet. Check',
+    noData: 'Vote counting in progress — no official data yet.',
     allNews: 'All',
     electionNews: 'Election',
   } : {
@@ -125,12 +124,11 @@ export default function Home() {
     margin: 'अन्तर',
     declared: 'घोषित',
     leading: 'अग्रणी',
-    noData: 'मत गणना जारी छ — अहिले आधिकारिक डेटा छैन। हेर्नुहोस्',
+    noData: 'मत गणना जारी छ — अहिले आधिकारिक डेटा छैन।',
     allNews: 'सबै',
     electionNews: 'निर्वाचन',
   };
 
-  // Fetch results from our API proxy
   const fetchResults = useCallback(async () => {
     try {
       const r = await fetch('/api/results');
@@ -143,7 +141,6 @@ export default function Home() {
     }
   }, []);
 
-  // Fetch news
   const fetchNews = useCallback(async () => {
     try {
       const r = await fetch('/api/news');
@@ -159,7 +156,6 @@ export default function Home() {
   useEffect(() => {
     fetchResults();
     fetchNews();
-    // countdown timer
     timerRef.current = setInterval(() => {
       setCountdown(c => {
         if (c <= 1) {
@@ -172,15 +168,12 @@ export default function Home() {
     return () => clearInterval(timerRef.current);
   }, [fetchResults, fetchNews]);
 
-  // ── Party tab data ────────────────────────────────────────────────────────
   const liveParties = results?.parties || [];
   const mergedParties = PARTIES.map(p => {
-    const live = liveParties.find(lp => lp.id === p.id || lp.name?.toLowerCase().includes(p.abbr.toLowerCase()));
-    return { ...p, liveSeats: live?.seats || 0, liveLeading: live?.leading || 0 };
+    const live = liveParties.find(lp => lp.abbr === p.abbr);
+    return { ...p, liveSeats: live?.seats || 0, liveLeading: live?.leading || 0, totalCandidates: live?.totalCandidates || 0 };
   }).sort((a, b) => partySortDir === 'asc' ? a.s2079 - b.s2079 : b.s2079 - a.s2079);
-  const maxSeats = Math.max(...mergedParties.map(p => p.s2079), 1);
 
-  // ── Candidates filter ─────────────────────────────────────────────────────
   const filteredCands = NOTABLE_CANDIDATES.filter(c => {
     const q = candSearch.toLowerCase();
     if (q && !c.name.toLowerCase().includes(q) && !c.nameNp.includes(q) && !c.constituency.toLowerCase().includes(q)) return false;
@@ -189,12 +182,9 @@ export default function Home() {
     return true;
   });
 
-  // ── Constituencies & Sorting ────────────────────────────────────────────────
-  const [resSort, setResSort] = useState('serial'); // 'serial' | 'margin' | 'votes'
-
+  const [resSort, setResSort] = useState('serial');
   const constituencies = (results?.constituencies || []).sort((a, b) => {
     if (resSort === 'serial') {
-      // Sort alphabetically by District then by the Constituency number (1, 2, 3...)
       const dCmp = a.district.localeCompare(b.district);
       if (dCmp !== 0) return dCmp;
       const numA = parseInt(a.name.split('-')[1]) || 0;
@@ -207,7 +197,6 @@ export default function Home() {
 
   const declared = constituencies.filter(c => c.status === 'declared').length;
 
-  // ── News filter ───────────────────────────────────────────────────────────
   const allArticles = news?.articles || [];
   const filteredNews = newsFilter === 'election'
     ? allArticles.filter(a => a.relevant)
@@ -219,36 +208,27 @@ export default function Home() {
     <>
       <Head>
         <title>{L.title}</title>
-        <meta name="description" content="Live Nepal Election 2082 results — real-time vote counting, party standings, candidate tracker and news from ECN." />
+        <meta name="description" content="Live Nepal Election 2082 results." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta property="og:title" content={L.title} />
-        <meta property="og:description" content="Live results dashboard for Nepal's Pratinidhi Sabha Election 2082" />
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇳🇵</text></svg>" />
         <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
       <div className={`app${lang === 'np' ? ' np' : ''}`}>
-        {/* ── HEADER ── */}
         <header className="header">
           <div className="header-inner">
-            <svg width="22" height="28" viewBox="0 0 22 28" fill="none">
-              <polygon points="0,0 18,0 18,2 5,14 18,14 18,16 0,28" fill="#003893" />
-              <polygon points="1,1 17,1 4.5,13.5 17,13.5 17,15.5 1,15.5" fill="#C8102E" />
-            </svg>
-            <div className="header-titles">
-              <h1>🇳🇵 Nepal Election 2082</h1>
-              <p className="header-sub">{L.sub}</p>
+            <div className="header-logo">
+              <h1>NEPAL <span className="gold">ELECTION</span> 2082</h1>
+              <div className="header-sub">{L.sub}</div>
             </div>
             <div className="live-pill">
-              <span className="live-dot" />
-              {L.live}
+              <span className="live-dot" /> {L.live}
             </div>
             <div className="header-right">
               <div className="countdown-wrap">
-                <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                 <span className="countdown-num">{countdown}s</span>
               </div>
-              <button className="lang-btn" onClick={() => setLang(l => l === 'en' ? 'np' : 'en')}>
+              <button className="lang-btn" onClick={() => setLang(lang === 'en' ? 'np' : 'en')}>
                 {lang === 'en' ? 'नेपाली' : 'English'}
               </button>
             </div>
@@ -262,780 +242,356 @@ export default function Home() {
           </nav>
         </header>
 
-        {/* ── STAT STRIP ── */}
         <div className="stat-strip">
           <div className="stat-strip-inner">
-            {[
-              { label: 'Total Seats', labelNp: 'कुल सिट', val: '275', cls: 'gold' },
-              { label: 'FPTP', labelNp: 'प्रत्यक्ष', val: '165', cls: 'blue' },
-              { label: 'PR Seats', labelNp: 'समानुपातिक', val: '110', cls: 'blue' },
-              { label: 'Declared', labelNp: 'घोषित', val: declared || '—', cls: 'green' },
-              { label: 'Candidates', labelNp: 'उम्मेदवार', val: '3,406', cls: '' },
-              { label: 'Parties', labelNp: 'दलहरू', val: '66+', cls: '' },
-              { label: 'Turnout', labelNp: 'मतदान', val: '~60%', cls: 'red' },
-              { label: 'Data Source', labelNp: 'स्रोत', val: results?.source || '…', cls: 'muted' },
-            ].map(s => (
-              <div key={s.label} className="stat-item">
-                <div className="stat-label">{lang === 'np' ? s.labelNp : s.label}</div>
-                <div className={`stat-val ${s.cls}`}>{s.val}</div>
-              </div>
-            ))}
+            <div className="stat-item"><div className="stat-label">NC</div><div className="stat-val blue">{liveParties.find(p => p.abbr === 'NC')?.seats || 0}</div></div>
+            <div className="stat-item"><div className="stat-label">UML</div><div className="stat-val red">{liveParties.find(p => p.abbr === 'CPN-UML')?.seats || 0}</div></div>
+            <div className="stat-item"><div className="stat-label">RSP</div><div className="stat-val blue">{liveParties.find(p => p.abbr === 'RSP')?.seats || 0}</div></div>
+            <div className="stat-item"><div className="stat-label">MAOIST</div><div className="stat-val red">{liveParties.find(p => p.abbr === 'Maoist-C')?.seats || 0}</div></div>
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════ */}
-        {/*  TAB: LIVE RESULTS                             */}
-        {/* ═══════════════════════════════════════════════ */}
-        {tab === 'results' && (
-          <div className="panel">
-            <div className="panel-inner">
+        <main className="panel">
+          <div className="panel-inner">
+            {loading ? (
+              <div className="loader"><div className="spinner" /></div>
+            ) : results && tab === 'results' ? (
+              <>
+                <div className="results-summary">
+                  <div className="rs-card rs-declared"><div className="rs-num">{declared}</div><div className="rs-label">{L.declared}</div></div>
+                  <div className="rs-card rs-counting"><div className="rs-num">{165 - declared}</div><div className="rs-label">{lang === 'np' ? 'गणना जारी' : 'Counting'}</div></div>
+                  <div className="rs-card rs-total"><div className="rs-num">165</div><div className="rs-label">Total FPTP</div></div>
+                </div>
 
-              <div className="controls-row">
-                {/* ECN links bar */}
-                <div className="ecn-bar">
-                  <div className="ecn-bar-text">
-                    <svg width="14" height="14" fill="none" stroke="#4f8ef7" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                    <span><strong>Live data</strong> fetched server-side from <strong>result.election.gov.np</strong> via our proxy API. Refreshes every 30s.</span>
-                  </div>
-                  <div className="ecn-links">
-                    {[
-                      { href: 'https://result.election.gov.np', label: '🏛 ECN Official', color: '#ff6b7a' },
-                      { href: 'https://nepalvotes.live', label: '📊 nepalvotes.live', color: '#4f8ef7' },
-                      { href: 'https://election.nepsebajar.com/en', label: '📋 nepsebajar', color: '#d97706' },
-                      { href: 'https://election.onlinekhabar.com', label: '🌐 OnlineKhabar', color: '#16a34a' },
-                    ].map(l => (
-                      <a key={l.href} href={l.href} target="_blank" rel="noopener" className="ecn-link" style={{ color: l.color, borderColor: l.color + '44', background: l.color + '14' }}>
-                        {l.label}
-                      </a>
-                    ))}
+                <div className="section-header">
+                  <span className="section-title">{lang === 'np' ? 'मत परिणाम - समूह' : 'Live Results — Grouped View'}</span>
+                  <div className="sort-box">
+                    <label>{lang === 'np' ? 'क्रम:' : 'Sort:'}</label>
+                    <select value={resSort} onChange={e => setResSort(e.target.value)}>
+                      <option value="serial">{lang === 'np' ? 'जिल्ला' : 'District/Serial'}</option>
+                      <option value="margin">{lang === 'np' ? 'अन्तर' : 'Margin'}</option>
+                      <option value="votes">{lang === 'np' ? 'मत' : 'Votes'}</option>
+                    </select>
                   </div>
                 </div>
 
-                <div className="sort-box">
-                  <label>{lang === 'np' ? 'क्रमबद्ध:' : 'Sort by:'}</label>
-                  <select value={resSort} onChange={e => setResSort(e.target.value)}>
-                    <option value="serial">{lang === 'np' ? 'जिल्ला (A-Z)' : 'District (A-Z)'}</option>
-                    <option value="margin">{lang === 'np' ? 'सर्वाधिक मतान्तर' : 'Highest Margin'}</option>
-                    <option value="votes">{lang === 'np' ? 'सर्वाधिक मत' : 'Highest Votes'}</option>
+                <div className="results-grid">
+                  {constituencies.map((c, i) => (
+                    <div key={c.id || i} className="res-card" style={{ animationDelay: `${i * 0.02}s` }}>
+                      <div className="res-card-header">
+                        <div className="res-card-title-wrap">
+                          <div className="res-card-title">
+                            <h4>{lang === 'np' ? c.nameNp : c.name}</h4>
+                            <span className="res-card-sub">{lang === 'np' ? c.districtNp : c.district}, {lang === 'np' ? c.provinceNp : c.province}</span>
+                          </div>
+                          {['Jhapa-5', 'Kathmandu-1', 'Banke-2', 'Taplejung-1'].includes(c.name) && (
+                            <div className="verified-badge">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                              <span>VERIFIED</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`status-badge status-${c.status}`}>
+                          {c.status === 'declared' ? '✓' : '⏳'}
+                        </span>
+                      </div>
+
+                      <div className="res-card-body">
+                        <div className="res-cand-list">
+                          {(c.candidates || []).map((cand, idx) => {
+                            const candParty = PARTIES.find(p => p.abbr === cand.party);
+                            return (
+                              <div key={idx} className={`res-cand-row ${idx === 0 ? 'winner' : ''}`}>
+                                <div className="res-cand-rank">{idx + 1}</div>
+                                <div className="res-cand-main">
+                                  <div className="res-cand-name-group">
+                                    <div className="res-cand-name">{lang === 'np' ? cand.nameNp : cand.name}</div>
+                                    <div className="res-cand-party-abbr">{cand.party}</div>
+                                  </div>
+                                  <div className="res-cand-votes">
+                                    <span className="res-vote-num">{fmt(cand.votes)}</span>
+                                    <span className="res-vote-lbl">{L.votes}</span>
+                                  </div>
+                                </div>
+                                {candParty && <div className="res-cand-logo"><PartyLogo party={candParty} size={20} /></div>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="res-card-footer">
+                        <div className="res-margin-box">
+                          <span className="label text-muted">{L.margin}:</span>
+                          <span className="val text-green">+{fmt(c.margin)}</span>
+                        </div>
+                        <div className="res-total-box">
+                          <span className="val">{fmt((c.candidates || []).reduce((acc, curr) => acc + curr.votes, 0))}</span>
+                          <span className="label">{lang === 'np' ? 'कुल मत' : 'Total'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : tab === 'parties' ? (
+              <div className="panel-inner">
+                <div className="section-header">
+                  <span className="section-title">{lang === 'np' ? 'दलहरूको स्थिति' : 'Political Parties Status'}</span>
+                  <div className="sort-btns">
+                    <button className={`sort-btn${partySortDir === 'asc' ? ' active' : ''}`} onClick={() => setPartySortDir('asc')}>{L.sortAsc}</button>
+                    <button className={`sort-btn${partySortDir === 'desc' ? ' active' : ''}`} onClick={() => setPartySortDir('desc')}>{L.sortDesc}</button>
+                  </div>
+                </div>
+                <div className="party-grid">
+                  {mergedParties.map((p, i) => (
+                    <div key={p.id} className="party-card">
+                      <div className="party-card-top">
+                        <PartyLogo party={p} size={48} />
+                        <div className="party-card-info">
+                          <div className="party-card-name">{lang === 'np' ? p.nameNp : p.name}</div>
+                          <div className="party-card-abbr">{p.abbr}</div>
+                        </div>
+                      </div>
+                      <div className="seats-block" style={{ background: p.bgColor, borderColor: p.color + '33' }}>
+                        <div className="party-stats-grid">
+                          <div className="ps-item">
+                            <div className="ps-val" style={{ color: p.color }}>{p.totalCandidates}</div>
+                            <div className="ps-lbl">{lang === 'np' ? 'उम्मेदवार' : 'Candidates'}</div>
+                          </div>
+                          <div className="ps-item">
+                            <div className="ps-val" style={{ color: p.color }}>{p.liveSeats}</div>
+                            <div className="ps-lbl">{lang === 'np' ? 'विजेता' : 'Winners'}</div>
+                          </div>
+                          <div className="ps-item">
+                            <div className="ps-val" style={{ color: p.color }}>{p.liveLeading}</div>
+                            <div className="ps-lbl">{lang === 'np' ? 'अग्रता' : 'Leading'}</div>
+                          </div>
+                        </div>
+                        <div className="seats-bar-bg">
+                          <div className="seats-bar" style={{ width: `${Math.min(100, ((p.liveSeats + p.liveLeading) / 165) * 100)}%`, background: p.color }} />
+                        </div>
+                      </div>
+                      <div className="party-desc">{lang === 'np' ? '' : p.description}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : tab === 'candidates' ? (
+              <div className="panel-inner">
+                <div className="filter-row">
+                  <div className="search-wrap">
+                    <input type="text" className="search-input" placeholder={L.search} value={candSearch} onChange={e => setCandSearch(e.target.value)} />
+                  </div>
+                  <select className="filter-select" value={candParty} onChange={e => setCandParty(e.target.value)}>
+                    <option value="">{L.allParties}</option>
+                    {[...new Set(NOTABLE_CANDIDATES.map(c => PARTY_BY_ID[c.partyId]?.abbr).filter(Boolean))].sort().map(a => <option key={a} value={a}>{a}</option>)}
                   </select>
                 </div>
-              </div>
 
-              {loading ? (
-                <div className="loader"><div className="spinner" /><p>Fetching live results from ECN…</p></div>
-              ) : constituencies.length === 0 ? (
-                <div className="no-data-box">
-                  <div className="no-data-icon">🗳️</div>
-                  <h3>{lang === 'np' ? 'मत गणना जारी छ' : 'Vote counting in progress'}</h3>
-                  <p>
-                    {L.noData}{' '}
-                    <a href="https://result.election.gov.np" target="_blank" rel="noopener" style={{ color: '#003893' }}>result.election.gov.np</a>
-                    {' '}{lang === 'np' ? 'मा सिधै।' : 'directly.'}
-                  </p>
-                  <p className="no-data-sub">{lang === 'np' ? 'ECN सर्भर JS-rendered छ — API डेटा गणना सुरु हुँदा देखिनेछ।' : 'ECN server is JS-rendered — API data will appear as counting begins.'}</p>
-                  <div className="party-bar-preview">
-                    <h4 style={{ marginBottom: 14, color: '#9aa0b8', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                      {lang === 'np' ? '२०७९ बेसलाइन — दल अनुसार सिट' : '2079 Baseline — Seats by Party'}
-                    </h4>
-                    {[...PARTIES].sort((a, b) => b.s2079 - a.s2079).filter(p => p.s2079 > 0).map(p => (
-                      <div key={p.id} className="preview-bar-row">
-                        <div className="preview-bar-label">
-                          <PartyLogo party={p} size={22} />
-                          <span>{lang === 'np' ? p.nameNp : p.abbr}</span>
-                        </div>
-                        <div className="preview-bar-bg">
-                          <div className="preview-bar-fill" style={{ width: `${(p.s2079 / 89) * 100}%`, background: p.color }} />
-                        </div>
-                        <span className="preview-bar-num">{p.s2079}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="results-summary">
-                    <div className="rs-card rs-declared"><div className="rs-num">{declared}</div><div className="rs-label">{L.declared}</div></div>
-                    <div className="rs-card rs-counting"><div className="rs-num">{165 - declared}</div><div className="rs-label">{lang === 'np' ? 'गणना जारी' : 'Counting'}</div></div>
-                    <div className="rs-card rs-total"><div className="rs-num">165</div><div className="rs-label">{lang === 'np' ? 'कुल FPTP' : 'Total FPTP'}</div></div>
-                  </div>
-                  <div className="results-grid">
-                    {constituencies.map((c, i) => {
-                      const p = PARTIES.find(p => p.name?.toLowerCase().includes((c.leadingParty || '').toLowerCase()) || p.abbr.toLowerCase() === (c.leadingParty || '').toLowerCase());
-                      const cName = lang === 'np' ? (c.nameNp || c.name) : c.name;
-                      const cDist = lang === 'np' ? (c.districtNp || c.district) : c.district;
-                      const cProv = lang === 'np' ? (c.provinceNp || c.province) : c.province;
-                      const cCand = lang === 'np' ? (c.leadingCandidateNp || c.leadingCandidate) : c.leadingCandidate;
-
-                      return (
-                        <div key={c.id || i} className="res-card">
-                          <div className="res-card-header">
-                            <div className="res-card-title-wrap">
-                              <div className="res-card-title">
-                                <h4>{cName}</h4>
-                                <span className="res-card-sub">{cDist}, {cProv}</span>
-                              </div>
-                              {['Jhapa-5', 'Kathmandu-1', 'Banke-2', 'Taplejung-1'].includes(c.name) && (
-                                <div className="verified-badge">
-                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                                  <span>VERIFIED</span>
-                                </div>
-                              )}
+                {!candSearch && !candParty && !candProv && (
+                  <div className="trending-section">
+                    <h3 className="trending-title">🔥 {lang === 'np' ? 'ट्रेन्डिङ उम्मेदवार' : 'Trending Candidates'}</h3>
+                    <div className="trending-grid">
+                      {NOTABLE_CANDIDATES.map(c => {
+                        const p = PARTY_BY_ID[c.partyId];
+                        const con = constituencies.find(con => con.name === c.constituency);
+                        const candData = con?.candidates?.find(can => can.name === c.name);
+                        return (
+                          <div key={c.id} className="trending-card" onClick={() => setSelectedCand(c)}>
+                            <div className="trending-photo-wrap">
+                              <CandidatePhoto candidate={c} party={p} size={70} />
+                              <div className="trending-party-small"><PartyLogo party={p} size={20} /></div>
                             </div>
-                            <span className={`status-badge status-${c.status}`}>
-                              {c.status === 'declared' ? '✓' : '⏳'}
-                            </span>
-                          </div>
-
-                          <div className="res-card-body">
-                            <div className="res-candidate">
-                              <div className="res-cand-info">
-                                <span className="res-cand-name">{cCand || '—'}</span>
-                                {c.leadingCandidate && c.leadingCandidateNp && (
-                                  <span className="res-cand-sub-name">{lang === 'np' ? c.leadingCandidate : c.leadingCandidateNp}</span>
-                                )}
+                            <div className="trending-info">
+                              <div className="trending-name">{lang === 'np' ? c.nameNp : c.name}</div>
+                              <div className="trending-votes">
+                                <span className="t-vote-val">{candData ? fmt(candData.votes) : '—'}</span>
+                                <span className="t-vote-lbl">{L.votes}</span>
                               </div>
-                              {p && (
-                                <div className="party-tag" style={{ background: p.bgColor, color: p.color, borderColor: p.color + '44' }}>
-                                  <PartyLogo party={p} size={16} />
-                                  <span>{lang === 'np' && p.nameNp ? p.nameNp : p.abbr}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="res-stats">
-                              <div className="res-stat-box">
-                                <span className="res-stat-val">{fmt(c.leadingVotes)}</span>
-                                <span className="res-stat-lbl">{lang === 'np' ? 'मत' : 'Votes'}</span>
-                              </div>
-                              <div className="res-stat-box">
-                                <span className="res-stat-val margin">{c.margin > 0 ? `+${fmt(c.margin)}` : '—'}</span>
-                                <span className="res-stat-lbl">{L.margin}</span>
-                              </div>
+                              <div className="trending-loc">{lang === 'np' ? c.constituencyNp : c.constituency}</div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ═══════════════════════════════════════════════ */}
-        {/*  TAB: PARTIES                                  */}
-        {/* ═══════════════════════════════════════════════ */}
-        {tab === 'parties' && (
-          <div className="panel">
-            <div className="panel-inner">
-              <div className="section-header">
-                <span className="section-title">{lang === 'np' ? 'दलहरू — २०७९ सिट (बढ्दो क्रम)' : 'Political Parties — 2079 Seats (Ascending)'}</span>
-                <div className="sort-btns">
-                  <button className={`sort-btn${partySortDir === 'asc' ? ' active' : ''}`} onClick={() => setPartySortDir('asc')}>{L.sortAsc}</button>
-                  <button className={`sort-btn${partySortDir === 'desc' ? ' active' : ''}`} onClick={() => setPartySortDir('desc')}>{L.sortDesc}</button>
-                </div>
-              </div>
-
-              <div className="party-grid">
-                {mergedParties.map((p, i) => (
-                  <div key={p.id} className="party-card" style={{ animationDelay: `${i * 0.04}s` }}>
-                    <div className="party-card-top">
-                      <PartyLogo party={p} size={48} />
-                      <div className="party-card-info">
-                        <div className="party-card-name">{lang === 'np' ? p.nameNp : p.name}</div>
-                        <div className="party-card-abbr">{p.abbr} {p.founded ? `· Est. ${p.founded}` : ''}</div>
-                        <div className="party-card-ideology">{p.ideology}</div>
-                      </div>
+                        );
+                      })}
                     </div>
-
-                    <div className="seats-block" style={{ background: p.bgColor, borderColor: p.color + '33' }}>
-                      <div className="seats-row">
-                        <div>
-                          <div className="seats-number" style={{ color: p.color }}>{p.liveSeats + p.liveLeading}</div>
-                          <div className="seats-label">{lang === 'np' ? 'लाइभ अग्रता' : 'Live Leading'}</div>
-                        </div>
-                        <div className="live-seats">
-                          <div className="live-seats-row"><span className="ls-dot declared-dot" /><span>{p.liveSeats} declared</span></div>
-                          <div className="live-seats-row"><span className="ls-dot leading-dot" /><span>{p.liveLeading} leading</span></div>
-                        </div>
-                      </div>
-                      <div className="seats-context">
-                        {p.s2079 > 0 ? `${lang === 'np' ? '२०७९ मा जितेको सिट:' : '2079 Seats Won:'} ${p.s2079}` : L.newParty}
-                      </div>
-                      <div className="seats-bar-bg">
-                        <div className="seats-bar" style={{ width: `${Math.min(100, Math.max(2, ((p.liveSeats + p.liveLeading) / 165) * 100))}%`, background: p.color }} />
-                      </div>
-                    </div>
-                    <div className="party-desc">{lang === 'np' ? '' : p.description}</div>
-                    <div className="counting-pill" style={{ background: p.bgColor, color: p.color }}>⏳ {L.counting}</div>
                   </div>
-                ))}
-              </div>
-
-              <div className="info-card">
-                <h3>{lang === 'np' ? '२०८२ निर्वाचन बारे' : 'About Nepal Election 2082'}</h3>
-                <p>
-                  {lang === 'np'
-                    ? 'नेपालले फाल्गुण २१, २०८२ (मार्च ५, २०२६) मा प्रतिनिधि सभा निर्वाचन २०८२ सम्पन्न गरेको छ। यो जेन जेड नेतृत्वको आन्दोलनले KP शर्मा ओलीलाई सत्ताबाट हटाएपछिको पहिलो निर्वाचन हो। पूर्व प्रधान न्यायाधीश सुशीला कार्की नेपालकी पहिलो महिला अन्तरिम प्रधानमन्त्री बनिन्। झन्डै १ करोड ९० लाख मतदाताले ७७ जिल्लाका ३,४०६ उम्मेदवारबीच छनोट गरे।'
-                    : 'Nepal held the Pratinidhi Sabha (HoR) Election 2082 on March 5, 2026 — the first election after Gen Z protests ousted PM KP Sharma Oli in September 2025, killing 77. Former Chief Justice Sushila Karki served as Nepal\'s first female interim PM. ~19 million voters across 77 districts chose from 3,406 candidates. The key race to watch: Balendra "Balen" Shah (RSP) vs KP Oli (UML) in Jhapa-5.'
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ═══════════════════════════════════════════════ */}
-        {/*  TAB: CANDIDATES                               */}
-        {/* ═══════════════════════════════════════════════ */}
-        {tab === 'candidates' && (
-          <div className="panel">
-            <div className="panel-inner">
-              <div className="filter-row">
-                <div className="search-wrap">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                  <input
-                    type="text"
-                    className="search-input"
-                    placeholder={L.search}
-                    value={candSearch}
-                    onChange={e => setCandSearch(e.target.value)}
-                  />
-                </div>
-                <select className="filter-select" value={candParty} onChange={e => setCandParty(e.target.value)}>
-                  <option value="">{L.allParties}</option>
-                  {[...new Set(NOTABLE_CANDIDATES.map(c => PARTY_BY_ID[c.partyId]?.abbr).filter(Boolean))].sort().map(a => (
-                    <option key={a} value={a}>{a}</option>
-                  ))}
-                </select>
-                <select className="filter-select" value={candProv} onChange={e => setCandProv(e.target.value)}>
-                  <option value="">{L.allProv}</option>
-                  {[...new Set(NOTABLE_CANDIDATES.map(c => c.province))].sort().map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-                <span className="sort-note">↑ {lang === 'np' ? 'मत अनुसार' : 'Sorted by votes'}</span>
-              </div>
-
-              {filteredCands.length === 0 ? (
-                <p className="empty-msg">{lang === 'np' ? 'कुनै उम्मेदवार फेला परेन।' : 'No candidates match your filters.'}</p>
-              ) : (
+                )}
+                <h3 className="section-subtitle">{lang === 'np' ? 'सबै उम्मेदवारहरू' : 'All Notables'}</h3>
                 <div className="cand-list">
                   {filteredCands.map((c, i) => {
-                    const p = PARTY_BY_ID[c.partyId];
-                    const match = constituencies.find(con => con.leadingCandidate === c.name || con.leadingCandidateNp === c.name || con.leadingCandidate === c.nameNp);
+                    const con = constituencies.find(con => con.name === c.constituency);
+                    const candData = con?.candidates?.find(can => can.name === c.name);
                     return (
-                      <div key={c.id} className="cand-row-card" onClick={() => setSelectedCand(c)} style={{ animationDelay: `${i * 0.03}s` }}>
+                      <div key={c.id} className="cand-row-card" onClick={() => setSelectedCand(c)}>
                         <div className="cand-row-main">
-                          <div className="cand-row-avatar">
-                            <CandidatePhoto candidate={c} party={p} size={58} />
-                          </div>
+                          <CandidatePhoto candidate={c} party={PARTY_BY_ID[c.partyId]} size={48} />
                           <div className="cand-row-names">
-                            <div className="cand-name-primary">{lang === 'np' ? c.nameNp || c.name : c.name}</div>
-                            <div className="cand-name-secondary">{lang === 'np' ? c.name : c.nameNp}</div>
-                            {p && (
-                              <div className="cand-row-party">
-                                <PartyLogo party={p} size={18} />
-                                <span>{lang === 'np' ? p.nameNp : p.name}</span>
-                              </div>
-                            )}
+                            <div className="cand-name-primary">{lang === 'np' ? c.nameNp : c.name}</div>
+                            <div className="cand-row-party">{PARTY_BY_ID[c.partyId]?.abbr} · {lang === 'np' ? c.constituencyNp : c.constituency}</div>
                           </div>
                         </div>
-
-                        <div className="cand-row-badges">
-                          <span className="cand-badge">{lang === 'np' ? c.provinceNp || c.province : c.province}</span>
-                          <span className="cand-badge">{lang === 'np' ? c.constituencyNp || c.constituency : c.constituency}</span>
-                        </div>
-
                         <div className="cand-row-votes">
-                          <div className="cand-vote-group">
-                            <div className="cand-vote-val">{match ? fmt(match.leadingVotes) : '—'}</div>
-                            <div className="cand-vote-lbl">{L.votes}</div>
-                          </div>
-                          <div className={`cand-status-tag ${match?.status || 'counting'}`}>
-                            {match?.status === 'declared' ? (lang === 'np' ? 'घोषित' : 'Declared') : (lang === 'np' ? 'गणना जारी' : 'Counting')}
-                          </div>
-                        </div>
-
-                        <div className="cand-row-action">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+                          <span className="cand-vote-val">{candData ? fmt(candData.votes) : '—'}</span>
+                          <span className="cand-vote-lbl">{L.votes}</span>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              )}
-
-              <div className="cand-note">
-                📸 {lang === 'np'
-                  ? `उम्मेदवारहरूको डेटा लाइभ ECN नतिजाहरूसँग सिङ्क गरिएको छ।`
-                  : `Candidate data is live-synced with current ECN results.`
-                }
               </div>
-            </div>
+            ) : tab === 'news' ? (
+              <div className="panel-inner">
+                <div className="news-layout">
+                  <div className="news-col">
+                    <h3 className="col-title">📰 {lang === 'np' ? 'ताजा समाचार' : 'Latest Articles'}</h3>
+                    <div className="news-stream">
+                      {allArticles.slice(0, 10).map((a, i) => (
+                        <a key={i} href={a.link} target="_blank" rel="noopener" className="news-card compact">
+                          <div className="news-source-tag" style={{ color: a.color }}>{a.source}</div>
+                          <div className="news-title">{a.title}</div>
+                          <div className="news-meta"><span className="news-time">{ago(a.pubDate)}</span></div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="news-col">
+                    <h3 className="col-title">📺 {lang === 'np' ? 'भिडियो लाइभ' : 'YouTube Live'}</h3>
+                    <div className="yt-embed-wrap">
+                      <div className="yt-badge">LIVE</div>
+                      <iframe src="https://www.youtube.com/embed/live_stream?channel=UC87bXhqkuaB5SADr0-C95Bw&autoplay=0&mute=1" frameBorder="0" allowFullScreen></iframe>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
-        )}
+        </main>
 
-        {/* ── MODAL ── */}
         {selectedCand && (
           <div className="modal-overlay" onClick={() => setSelectedCand(null)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
               <button className="modal-close" onClick={() => setSelectedCand(null)}>×</button>
               <div className="modal-header-top">
-                <CandidatePhoto candidate={selectedCand} party={PARTY_BY_ID[selectedCand.partyId]} size={100} />
+                <CandidatePhoto candidate={selectedCand} party={PARTY_BY_ID[selectedCand.partyId]} size={90} />
                 <div className="modal-title-wrap">
                   <h2>{lang === 'np' ? selectedCand.nameNp : selectedCand.name}</h2>
-                  <p className="modal-subtitle">{lang === 'np' ? selectedCand.name : selectedCand.nameNp}</p>
                   <div className="modal-party-row">
                     <PartyLogo party={PARTY_BY_ID[selectedCand.partyId]} size={24} />
-                    <span>{lang === 'np' ? PARTY_BY_ID[selectedCand.partyId]?.nameNp : PARTY_BY_ID[selectedCand.partyId]?.name}</span>
+                    <span>{PARTY_BY_ID[selectedCand.partyId]?.name}</span>
                   </div>
                 </div>
               </div>
-
               <div className="modal-grid">
-                <div className="modal-stat-box">
-                  <label>{lang === 'np' ? 'प्रदेश' : 'Province'}</label>
-                  <div>{lang === 'np' ? selectedCand.provinceNp || selectedCand.province : selectedCand.province}</div>
-                </div>
-                <div className="modal-stat-box">
-                  <label>{lang === 'np' ? 'निर्वाचन क्षेत्र' : 'Constituency'}</label>
-                  <div>{lang === 'np' ? selectedCand.constituencyNp || selectedCand.constituency : selectedCand.constituency}</div>
-                </div>
+                <div className="modal-stat-box"><label>Province</label><div>{selectedCand.province}</div></div>
+                <div className="modal-stat-box"><label>Constituency</label><div>{selectedCand.constituency}</div></div>
               </div>
-
-              <div className="modal-description">
-                <label>{lang === 'np' ? 'विवरण' : 'Details'}</label>
-                <p>{lang === 'np' ? selectedCand.notableNp : selectedCand.notable}</p>
-              </div>
-
+              <div className="modal-description"><label>About</label><p>{selectedCand.notable}</p></div>
               <div className="modal-votes-section">
                 <div className="modal-vote-main">
                   <div className="m-vote-val">
                     {(() => {
-                      const m = constituencies.find(con => con.leadingCandidate === selectedCand.name || con.leadingCandidateNp === selectedCand.name);
-                      return m ? fmt(m.leadingVotes) : '—';
+                      const con = constituencies.find(con => con.name === selectedCand.constituency);
+                      const candData = con?.candidates?.find(can => can.name === selectedCand.name);
+                      return candData ? fmt(candData.votes) : '—';
                     })()}
                   </div>
                   <label>{L.votes}</label>
                 </div>
-                <div className="m-status-wrap">
-                  <span className="live-dot" /> {L.live}
-                </div>
+                <div className="m-status-wrap"><span className="live-dot" /> {L.live}</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════ */}
-        {/*  TAB: NEWS                                     */}
-        {/* ═══════════════════════════════════════════════ */}
-        {tab === 'news' && (
-          <div className="panel">
-            <div className="panel-inner" Math={{ maxWidth: 1600 }}>
-              <div className="news-layout">
-                {/* Column 1: Articles */}
-                <div className="news-col">
-                  <h3 className="col-title">📰 {lang === 'np' ? 'ताजा समाचार' : 'Latest Articles'}</h3>
-                  <div className="news-filter-bar">
-                    <button className={`news-flt${newsFilter === 'all' ? ' active' : ''}`} onClick={() => setNewsFilter('all')}>{L.allNews}</button>
-                    <button className={`news-flt${newsFilter === 'election' ? ' active' : ''}`} onClick={() => setNewsFilter('election')}>{L.electionNews}</button>
-                  </div>
-                  {newsLoading ? (
-                    <div className="loader"><div className="spinner" /></div>
-                  ) : filteredNews.length === 0 ? (
-                    <div className="no-news"><p>RSS feeds loading...</p></div>
-                  ) : (
-                    <div className="news-stream">
-                      {filteredNews.slice(0, 15).map((a, i) => (
-                        <a key={i} href={a.link} target="_blank" rel="noopener" className="news-card compact" style={{ animationDelay: `${i * 0.03}s` }}>
-                          <div className="news-source-tag" style={{ background: a.color + '20', color: a.color, borderColor: a.color + '44' }}>
-                            {a.icon} {a.source}
-                          </div>
-                          <div className="news-title">{a.title}</div>
-                          <div className="news-meta">
-                            <span className="news-time">{ago(a.pubDate)}</span>
-                            {a.relevant && <span className="election-badge">🗳 Election</span>}
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Column 2: YouTube Live */}
-                <div className="news-col">
-                  <h3 className="col-title">📺 {lang === 'np' ? 'लाइभ भिडियो' : 'YouTube Live'}</h3>
-                  <div className="yt-stream">
-                    <div className="yt-embed-wrap">
-                      <div className="yt-badge">🔴 LIVE</div>
-                      <iframe
-                        src="https://www.youtube.com/embed/live_stream?channel=UC87bXhqkuaB5SADr0-C95Bw&autoplay=0&mute=1"
-                        title="Kantipur TV HD Live"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen>
-                      </iframe>
-                      <div className="yt-title">Kantipur TV HD — Election Coverage</div>
-                    </div>
-                    <div className="yt-embed-wrap">
-                      <div className="yt-badge">🔴 LIVE</div>
-                      <iframe
-                        src="https://www.youtube.com/embed/live_stream?channel=UCEqcbWeJ-t0yYDEu-G3M5Xg&autoplay=0&mute=1"
-                        title="AP1 HD Live"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen>
-                      </iframe>
-                      <div className="yt-title">AP1 HD — Live News</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Column 3: Social Media Mentions */}
-                <div className="news-col">
-                  <h3 className="col-title">💬 {lang === 'np' ? 'सामाजिक सञ्जाल' : 'Social Trends'}</h3>
-                  <div className="social-stream">
-                    {[
-                      { user: '@routineofnepal', name: 'RONB', time: '10m', text: 'Heavy voter turnout seen in Kathmandu-1. Reports suggest massive youth participation! #NepalElection2082' },
-                      { user: '@onlinekhabar', name: 'OnlineKhabar', time: '22m', text: 'JUST IN: Vote counting delayed in 3 constituencies due to weather. Live updates on our portal. 🗳️' },
-                      { user: '@bhuwantr', name: 'Bhuwan', time: '40m', text: 'The clash in Jhapa-5 is getting intense. Early trends showing a very tight margin!' },
-                      { user: '@election_np', name: 'EC Nepal', time: '1h', text: 'We urge all citizens to remain calm as the vote counting process officially begins across all 77 districts.' },
-                      { user: '@nepal_politics', name: 'Nepali Politics Today', time: '1h', text: 'This election marks a historic shift. The number of independent candidates leading in early polls is unprecedented.' },
-                    ].map((post, i) => (
-                      <div key={i} className="social-card">
-                        <div className="social-header">
-                          <div className="social-avatar">{post.name[0]}</div>
-                          <div>
-                            <div className="social-name">{post.name}</div>
-                            <div className="social-handle">{post.user} · {post.time}</div>
-                          </div>
-                          <div className="x-logo">𝕏</div>
-                        </div>
-                        <div className="social-text">{post.text}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── FOOTER ── */}
         <footer className="footer">
-          <span>🛡 <a href="https://result.election.gov.np" target="_blank" rel="noopener">result.election.gov.np</a> · Simulated Live Data</span>
+          <span>🛡 result.election.gov.np · Real-time Simulation</span>
           <span>{results?.fetchedAt ? `${L.lastFetch}: ${ago(results.fetchedAt)}` : ''}</span>
         </footer>
       </div>
 
       <style jsx global>{`
         :root {
-          /* Nepal Flag Colors: Crimson Red (#DC143C) and Blue (#003893) */
-          --bg: #f8f9fa; 
-          --surface: #ffffff; 
-          --surface-hover: #f1f5f9;
-          --surface2: #f1f5f9;
-          --border: rgba(0,0,0,0.08); 
-          --text: #0f172a; 
-          --muted: #475569;
-          --gold: #d97706; 
-          --blue: #003893; 
-          --blue-light: #2863c4;
-          --green: #16a34a; 
-          --red: #DC143C;
-          --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+          --bg: #f8f9fa; --surface: #ffffff; --border: rgba(0,0,0,0.08); --text: #0f172a; 
+          --muted: #64748b; --blue: #003893; --gold: #d97706; --red: #dc143c; --green: #16a34a; --surface2: #f1f5f9;
+          --shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; background: var(--bg); color: var(--text); }
-        body { font-family: 'Syne', sans-serif; overflow-x: hidden; }
-        body.np { font-family: 'Noto Sans Devanagari', 'Syne', sans-serif; }
-        a { text-decoration: none; }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.65)} }
-
-        .app { display:flex; flex-direction:column; min-height:100vh; }
-
-        /* HEADER */
-        .header { background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; box-shadow:var(--shadow); }
-        .header-inner { max-width:1400px; margin:0 auto; padding:10px 20px 4px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-        h1 { font-size:clamp(.9rem,2vw,1.3rem); font-weight:800; letter-spacing:-.2px; }
-        .gold { color:var(--gold); }
-        .header-sub { font-size:.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-top:2px; }
-        .live-pill { display:flex; align-items:center; gap:6px; background:rgba(200,16,46,.12); border:1px solid rgba(200,16,46,.35); border-radius:99px; padding:4px 11px; font-size:.66rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#ff6b7a; flex-shrink:0; }
-        .live-dot { width:7px; height:7px; border-radius:50%; background:#ff3d50; animation:pulse 1.3s ease-in-out infinite; display:inline-block; }
-        .header-right { display:flex; align-items:center; gap:8px; margin-left:auto; }
-        .countdown-wrap { display:flex; align-items:center; gap:5px; font-size:.7rem; color:var(--muted); }
-        .countdown-num { font-family:'JetBrains Mono',monospace; color:var(--blue); font-weight:600; }
-        .lang-btn { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:5px 10px; font-size:.7rem; font-weight:700; color:var(--text); cursor:pointer; font-family:inherit; transition:background .2s; }
-        .lang-btn:hover { background:var(--border); }
-        .tab-nav { max-width:1400px; margin:0 auto; padding:0 20px; display:flex; gap:0; }
-        .tab-btn { padding:8px 14px; font-size:.7rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; border:none; background:transparent; color:var(--muted); border-bottom:2px solid transparent; transition:all .2s; font-family:inherit; white-space:nowrap; }
-        .tab-btn.active { color:var(--blue); border-bottom-color:var(--blue); }
-        .tab-btn:hover { color:var(--text); }
-
-        /* STAT STRIP */
-        .stat-strip { background:var(--surface2); border-bottom:1px solid var(--border); overflow-x:auto; }
-        .stat-strip-inner { max-width:1400px; margin:0 auto; display:flex; padding:0 20px; }
-        .stat-item { padding:9px 18px; border-right:1px solid var(--border); white-space:nowrap; flex-shrink:0; }
-        .stat-item:last-child { border-right:none; }
-        .stat-label { font-size:.57rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:2px; }
-        .stat-val { font-family:'JetBrains Mono',monospace; font-size:.95rem; font-weight:600; }
-        .stat-val.gold { color:var(--gold); } .stat-val.blue { color:var(--blue); } .stat-val.green { color:var(--green); } .stat-val.red { color:var(--red); } .stat-val.muted { color:var(--muted); font-size:.78rem; }
-
-        /* PANEL */
-        .panel { flex:1; display:flex; flex-direction:column; }
-        .panel-inner { max-width:1400px; width:100%; margin:0 auto; padding:20px 20px 50px; }
-
-        /* ECN BAR */
-        .ecn-bar { background:rgba(79,142,247,.07); border:1px solid rgba(79,142,247,.2); border-radius:10px; padding:12px 16px; margin-bottom:18px; display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; }
-        .ecn-bar-text { font-size:.77rem; color:var(--muted); line-height:1.6; flex:1; min-width:240px; }
-        .ecn-bar-text strong { color:var(--text); }
-        .ecn-links { display:flex; gap:8px; flex-wrap:wrap; }
-        .ecn-link { padding:7px 13px; border-radius:7px; font-weight:700; font-size:.72rem; border:1px solid; transition:opacity .2s; }
-        .ecn-link:hover { opacity:.75; }
-
-        /* LOADER */
-        .loader { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px 20px; gap:14px; }
-        .spinner { width:38px; height:38px; border:3px solid rgba(79,142,247,.2); border-top-color:var(--blue); border-radius:50%; animation:spin .8s linear infinite; }
-        .loader p { color:var(--muted); font-size:.82rem; }
-
-        /* NO DATA */
-        .no-data-box { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:36px; text-align:center; }
-        .no-data-icon { font-size:3rem; margin-bottom:12px; }
-        .no-data-box h3 { font-size:1.1rem; margin-bottom:8px; }
-        .no-data-box p { color:var(--muted); font-size:.82rem; line-height:1.7; margin-bottom:6px; }
-        .no-data-sub { font-size:.72rem !important; }
-        .party-bar-preview { margin-top:28px; text-align:left; }
-        .preview-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-        .preview-bar-label { display:flex; align-items:center; gap:6px; width:130px; flex-shrink:0; font-size:.75rem; font-weight:600; }
-        .preview-bar-bg { flex:1; height:8px; background:rgba(255,255,255,.06); border-radius:4px; overflow:hidden; }
-        .preview-bar-fill { height:100%; border-radius:4px; transition:width 1.2s ease; }
-        .preview-bar-num { font-family:'JetBrains Mono',monospace; font-size:.78rem; font-weight:600; color:var(--gold); width:28px; text-align:right; flex-shrink:0; }
-
-        /* RESULTS SUMMARY CARDS */
-        .results-summary { display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
-        .rs-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 20px; text-align:center; min-width:100px; box-shadow:var(--shadow); }
-        .rs-num { font-family:'JetBrains Mono',monospace; font-size:1.8rem; font-weight:700; }
-        .rs-label { font-size:.65rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-top:2px; }
-        .rs-declared .rs-num { color:var(--green); }
-        .rs-counting .rs-num { color:var(--gold); }
-        .rs-total .rs-num { color:var(--blue); }
-
-        /* TABLE */
-        .table-wrap { border-radius:12px; border:1px solid var(--border); overflow-x:auto; }
-        table { width:100%; border-collapse:collapse; font-size:.8rem; }
-        thead tr { background:var(--surface2); border-bottom:1px solid var(--border); }
-        th { padding:11px 14px; text-align:left; font-size:.63rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); white-space:nowrap; }
-        tbody tr { border-bottom:1px solid var(--border); transition:background .15s; }
-        tbody tr:last-child { border-bottom:none; }
-        tbody tr:hover { background:rgba(255,255,255,.03); }
-        td { padding:10px 14px; vertical-align:middle; }
-        .rank-cell { color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:.72rem; width:36px; }
-        .con-name { font-weight:600; }
-        .con-district { font-size:.66rem; color:var(--muted); margin-top:1px; }
-        .muted-cell { color:var(--muted); font-size:.76rem; }
-        .candidate-cell { font-weight:600; }
-        .party-tag { display:inline-flex; align-items:center; gap:5px; border-radius:5px; padding:3px 8px; font-size:.68rem; font-weight:700; border:1px solid; white-space:nowrap; }
-        .votes-cell { font-family:'JetBrains Mono',monospace; font-weight:600; }
-        .margin-cell { font-family:'JetBrains Mono',monospace; font-size:.78rem; color:var(--green); }
-        .status-badge { display:inline-block; padding:3px 8px; border-radius:4px; font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
-        .status-declared { background:rgba(34,197,94,.15); color:var(--green); }
-        .status-counting { background:rgba(245,166,35,.15); color:var(--gold); }
-
-        /* SECTION HEADER */
-        .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
-        .section-title { font-size:.65rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
-        .sort-btns { display:flex; gap:6px; }
-        .sort-btn { background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:6px; padding:5px 11px; font-size:.68rem; font-weight:700; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .2s; }
-        .sort-btn.active { background:rgba(79,142,247,.15); border-color:rgba(79,142,247,.4); color:var(--blue); }
-
-        /* PARTY GRID */
-        .party-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; margin-bottom:28px; }
-        .party-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:11px; transition:border-color .2s,transform .2s; animation:fadeUp .4s both; box-shadow:var(--shadow); }
-        .party-card:hover { border-color:var(--blue); transform:translateY(-2px); box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); }
-        .party-card-top { display:flex; align-items:flex-start; gap:11px; }
-        .party-card-info { flex:1; min-width:0; }
-        .party-card-name { font-size:.82rem; font-weight:700; line-height:1.35; }
-        .party-card-abbr { font-size:.62rem; color:var(--muted); margin-top:2px; }
-        .party-card-ideology { font-size:.62rem; color:var(--muted); margin-top:2px; font-style:italic; }
-        .seats-block { border-radius:8px; padding:12px; border:1px solid; }
-        .seats-row { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
-        .seats-number { font-family:'JetBrains Mono',monospace; font-size:2.2rem; font-weight:700; line-height:1; }
-        .seats-label { font-size:.6rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:4px; font-weight:600; }
-        .live-seats { font-size:.67rem; color:var(--muted); display:flex; flex-direction:column; gap:3px; text-align:right; }
-        .live-seats-row { display:flex; align-items:center; gap:4px; justify-content:flex-end; }
-        .ls-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
-        .declared-dot { background:var(--green); }
-        .leading-dot { background:var(--blue); }
-        .seats-context { font-size:.65rem; color:var(--muted); line-height:1.4; }
-        .seats-bar-bg { height:5px; background:rgba(255,255,255,.06); border-radius:3px; overflow:hidden; margin-top:8px; }
-        .seats-bar { height:100%; border-radius:3px; transition:width 1.3s ease; }
-        .party-desc { font-size:.73rem; color:var(--muted); line-height:1.55; }
-        .counting-pill { display:inline-block; padding:3px 9px; border-radius:99px; font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
-
-        /* INFO CARD */
-        .info-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 22px; box-shadow:var(--shadow); }
-        .info-card h3 { font-size:.85rem; font-weight:700; margin-bottom:10px; color:var(--text); }
-        .info-card p { font-size:.8rem; color:var(--muted); line-height:1.8; }
-
-        /* FILTER ROW */
-        .filter-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; align-items:center; }
-        .search-wrap { flex:1; min-width:180px; position:relative; }
-        .search-wrap svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
-        .search-input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:9px 12px 9px 32px; color:var(--text); font-family:inherit; font-size:.8rem; outline:none; transition:border-color .2s; }
-        .search-input:focus { border-color:var(--blue); }
-        .filter-select { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-family:inherit; font-size:.8rem; outline:none; cursor:pointer; }
-        .filter-select option { background:#1a1f30; }
-        .sort-note { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-left:auto; }
-        .empty-msg { color:var(--muted); text-align:center; padding:40px; font-size:.82rem; }
-
-        /* SORT BOX */
-        .controls-row { display:flex; flex-direction:column; gap:16px; margin-bottom:16px; }
-        @media(min-width:768px) {
-          .controls-row { flex-direction:row; justify-content:space-between; align-items:flex-start; }
-        }
-        .sort-box { display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); padding:6px 12px; border-radius:8px; box-shadow:var(--shadow); font-size:0.8rem; }
-        .sort-box select { border:none; background:transparent; font-family:inherit; font-size:0.8rem; font-weight:600; color:var(--text); cursor:pointer; outline:none; }
-
-        /* CANDIDATE LIST (Professional Row) */
-        .cand-list { display:flex; flex-direction:column; gap:10px; }
-        .cand-row-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:20px; cursor:pointer; transition:all .2s ease; animation:fadeUp .3s both; box-shadow:var(--shadow); }
-        .cand-row-card:hover { border-color:var(--blue); transform:translateY(-1px); box-shadow:0 8px 12px -3px rgba(0,0,0,0.06); }
+        body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); }
+        .app.np { font-family: 'Noto Sans Devanagari', sans-serif; }
+        .header { background: #fff; border-bottom: 1px solid var(--border); sticky; top: 0; z-index: 100; }
+        .header-inner { max-width: 1400px; margin: 0 auto; padding: 15px 20px; display: flex; align-items: center; gap: 15px; }
+        h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; }
+        .gold { color: var(--gold); }
+        .header-sub { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+        .live-pill { display: flex; align-items: center; gap: 6px; background: rgba(220,20,60,0.1); border: 1px solid rgba(220,20,60,0.2); border-radius: 99px; padding: 4px 10px; font-size: 0.6rem; font-weight: 800; color: var(--red); }
+        .live-dot { width: 6px; height: 6px; background: var(--red); border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .header-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+        .lang-btn { background: var(--surface2); border: 1px solid var(--border); padding: 5px 12px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; cursor: pointer; }
         
-        .cand-row-main { display:flex; align-items:center; gap:16px; flex:2; min-width:200px; }
-        .cand-row-avatar { flex-shrink:0; border-radius:50%; overflow:hidden; border:2px solid var(--border); width:58px; height:58px; }
-        .cand-name-primary { font-size:1rem; font-weight:800; color:var(--text); letter-spacing:-0.01em; }
-        .cand-name-secondary { font-size:0.75rem; color:var(--muted); font-weight:500; }
-        .cand-row-party { display:flex; align-items:center; gap:6px; margin-top:4px; font-size:0.7rem; font-weight:700; color:var(--muted); }
-        
-        .cand-row-badges { flex:1; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
-        .cand-badge { background:var(--surface2); color:var(--muted); border:1px solid var(--border); padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; }
-        
-        .cand-row-votes { flex:1; display:flex; flex-direction:column; align-items:flex-end; gap:4px; min-width:100px; }
-        .cand-vote-group { text-align:right; }
-        .cand-vote-val { font-family:'JetBrains Mono',monospace; font-size:1.1rem; font-weight:800; color:var(--blue); line-height:1; }
-        .cand-vote-lbl { font-size:0.6rem; text-transform:uppercase; color:var(--muted); letter-spacing:0.05em; font-weight:600; }
-        .cand-status-tag { font-size:0.58rem; font-weight:800; text-transform:uppercase; padding:3px 8px; border-radius:4px; letter-spacing:0.06em; }
-        .cand-status-tag.declared { background:rgba(22,163,74,0.12); color:var(--green); }
-        .cand-status-tag.counting { background:rgba(217,119,6,0.12); color:var(--gold); }
-        .cand-row-action { color:var(--border); transition:color .2s; }
-        .cand-row-card:hover .cand-row-action { color:var(--blue); }
+        .tab-nav { max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; gap: 20px; }
+        .tab-btn { padding: 10px 0; border: none; background: none; font-weight: 700; font-size: 0.75rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
 
-        /* MODAL */
-        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; animation:fadeIn .2s both; }
-        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
-        .modal-content { background:var(--surface); width:100%; max-width:500px; border-radius:24px; padding:32px; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:slideUp .3s ease-out; }
-        @keyframes slideUp { from{transform:translateY(20px); opacity:0;} to{transform:translateY(0); opacity:1;} }
-        .modal-close { position:absolute; top:20px; right:20px; background:var(--surface2); border:none; width:32px; height:32px; border-radius:50%; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:all .2s; }
-        .modal-close:hover { background:var(--border); color:var(--text); }
-        
-        .modal-header-top { display:flex; align-items:center; gap:20px; margin-bottom:24px; }
-        .modal-title-wrap h2 { font-size:1.5rem; font-weight:800; color:var(--text); letter-spacing:-0.02em; }
-        .modal-subtitle { font-size:0.9rem; color:var(--muted); margin-bottom:8px; }
-        .modal-party-row { display:flex; align-items:center; gap:8px; font-weight:700; font-size:0.85rem; color:var(--muted); }
-        
-        .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
-        .modal-stat-box { background:var(--surface2); padding:16px; border-radius:12px; border:1px solid var(--border); }
-        .modal-stat-box label { display:block; font-size:0.6rem; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:4px; letter-spacing:0.05em; }
-        .modal-stat-box div { font-weight:700; font-size:0.95rem; color:var(--text); }
-        
-        .modal-description { margin-bottom:24px; }
-        .modal-description label { display:block; font-size:0.6rem; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:8px; }
-        .modal-description p { font-size:0.85rem; line-height:1.6; color:var(--text); }
-        
-        .modal-votes-section { background:var(--blue); color:#fff; padding:24px; border-radius:16px; display:flex; justify-content:space-between; align-items:center; }
-        .modal-vote-main { display:flex; flex-direction:column; }
-        .m-vote-val { font-family:'JetBrains Mono',monospace; font-size:2.2rem; font-weight:800; line-height:1; }
-        .modal-vote-main label { font-size:0.7rem; text-transform:uppercase; opacity:0.8; font-weight:700; margin-top:4px; }
-        .m-status-wrap { display:flex; align-items:center; gap:8px; font-weight:700; font-size:0.85rem; background:rgba(255,255,255,0.15); padding:8px 16px; border-radius:99px; }
+        .stat-strip { background: var(--surface2); border-bottom: 1px solid var(--border); }
+        .stat-strip-inner { max-width: 1400px; margin: 0 auto; display: flex; padding: 0 20px; }
+        .stat-item { padding: 10px 20px; border-right: 1px solid var(--border); }
+        .stat-label { font-size: 0.55rem; font-weight: 800; color: var(--muted); margin-bottom: 2px; }
+        .stat-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.9rem; }
 
-        .cand-note { margin-top:24px; font-size:.73rem; color:var(--muted); text-align:center; }
-        .cand-note a { color:var(--blue); }
+        .panel-inner { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .results-summary { display: flex; gap: 15px; margin-bottom: 20px; }
+        .rs-card { background: #fff; border: 1px solid var(--border); padding: 15px; border-radius: 12px; flex: 1; text-align: center; }
+        .rs-num { font-size: 1.5rem; font-weight: 800; }
+        .rs-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; color: var(--muted); }
 
-        /* NEWS */
-        .news-filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
-        .news-flt { background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:99px; padding:5px 13px; font-size:.7rem; font-weight:600; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .2s; white-space:nowrap; }
-        .news-flt.active { background:rgba(79,142,247,.15); border-color:rgba(79,142,247,.4); color:var(--blue); }
-        .news-flt:hover { color:var(--text); }
-        .news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
-        .news-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px; transition:border-color .2s,transform .2s; animation:fadeUp .3s both; color:var(--text); }
-        .news-card:hover { border-color:rgba(255,255,255,.18); transform:translateY(-2px); }
-        .news-source-tag { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:4px; font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border:1px solid; width:fit-content; }
-        .news-title { font-size:.84rem; font-weight:700; line-height:1.45; }
-        .news-desc { font-size:.73rem; color:var(--muted); line-height:1.5; }
-        .news-meta { display:flex; align-items:center; gap:8px; margin-top:auto; }
-        .news-time { font-size:.65rem; color:var(--muted); font-family:'JetBrains Mono',monospace; }
-        .election-badge { font-size:.62rem; background:rgba(245,166,35,.15); color:var(--gold); padding:2px 6px; border-radius:3px; font-weight:700; }
-        .no-news { padding:40px; text-align:center; color:var(--muted); font-size:.82rem; }
-        .news-direct-links { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:16px; }
-
-        /* FOOTER */
-        .footer { background:var(--surface2); border-top:1px solid var(--border); padding:8px 24px; font-size:.67rem; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-top:auto; }
-        .footer a { color:var(--blue); }
-
-        }
-        @media(max-width:640px) {
-          .tab-nav { overflow-x:auto; }
-          .header-inner { gap:8px; }
-          .party-grid { grid-template-columns:1fr; }
-          .cand-grid { grid-template-columns:1fr; }
-          .news-layout { grid-template-columns:1fr; }
-          .filter-row { flex-direction:column; }
-          .sort-note { margin-left:0; }
-        }
-
-        /* LIVE RESULTS CARDS */
-        .results-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px; margin-top:20px; }
-        .res-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; transition:all 0.2s; box-shadow:var(--shadow); }
-        .res-card:hover { border-color:var(--blue); transform:translateY(-2px); box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); }
-        .res-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; }
-        .res-card-title-wrap { flex:1; display:flex; flex-direction:column; gap:6px; }
-        .res-card-title h4 { font-size:0.95rem; font-weight:800; color:var(--text); margin-bottom:2px; letter-spacing:-0.01em; }
-        .res-card-sub { font-size:0.7rem; color:var(--muted); font-weight:500; }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .res-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+        .res-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .res-card-title h4 { font-size: 1rem; font-weight: 800; }
+        .res-card-sub { font-size: 0.7rem; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+        .verified-badge { background: var(--blue); color: #fff; font-size: 0.5rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: flex; align-items: center; gap: 3px; max-width: fit-content; }
         
-        .verified-badge { display:inline-flex; align-items:center; gap:4px; font-size:0.55rem; font-weight:800; color:var(--blue); background:rgba(0,56,147,0.08); padding:2px 6px; border-radius:4px; border:1px solid rgba(0,56,147,0.15); width:fit-content; }
+        .res-cand-list { display: flex; flex-direction: column; gap: 8px; }
+        .res-cand-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--surface2); }
+        .res-cand-row.winner { background: rgba(0,56,147,0.05); border: 1px solid rgba(0,56,147,0.1); }
+        .res-cand-rank { font-weight: 800; color: var(--muted); width: 15px; font-size: 0.8rem; }
+        .res-cand-main { flex: 1; display: flex; justify-content: space-between; align-items: center; }
+        .res-cand-name { font-size: 0.85rem; font-weight: 700; }
+        .res-cand-party-abbr { font-size: 0.65rem; color: var(--muted); font-weight: 800; }
+        .res-vote-num { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; display: block; text-align: right; }
+        .res-vote-lbl { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; display: block; text-align: right; }
         
-        .res-card-body { border-top:1px solid var(--border); padding-top:12px; }
-        .res-candidate { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-        .res-cand-info { display:flex; flex-direction:column; }
-        .res-cand-name { font-size:0.9rem; font-weight:700; color:var(--text); }
-        .res-cand-sub-name { font-size:0.75rem; color:var(--muted); }
-        
-        .party-tag { display:inline-flex; align-items:center; gap:6px; border-radius:6px; padding:4px 8px; font-size:0.68rem; font-weight:800; border:1px solid; white-space:nowrap; }
-        
-        .res-stats { display:flex; gap:10px; }
-        .res-stat-box { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px; text-align:center; }
-        .res-stat-val { display:block; font-size:0.95rem; font-family:'JetBrains Mono', monospace; font-weight:800; color:var(--blue); }
-        .res-stat-val.margin { color:var(--green); }
-        .res-stat-lbl { font-size:0.6rem; text-transform:uppercase; color:var(--muted); letter-spacing:0.06em; font-weight:700; }
+        .res-card-footer { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .res-margin-box { font-size: 0.65rem; font-weight: 700; }
+        .text-green { color: var(--green); }
+        .res-total-box { text-align: right; }
 
-        /* NEWS MULTI COLUMN LAYOUT */
-        .news-layout { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; }
-        .news-col { display:flex; flex-direction:column; gap:12px; }
-        .col-title { font-size:0.9rem; font-weight:700; padding:10px 0; border-bottom:1px solid var(--border); margin-bottom:10px; display:flex; align-items:center; gap:8px; color:var(--text); }
-        .news-stream, .yt-stream, .social-stream { display:flex; flex-direction:column; gap:12px; }
-        
-        /* Youtube Embeds */
-        .yt-embed-wrap { background:var(--surface); border-radius:12px; overflow:hidden; border:1px solid var(--border); position:relative; }
-        .yt-embed-wrap iframe { width:100%; aspect-ratio:16/9; display:block; }
-        .yt-title { padding:10px 12px; font-size:0.8rem; font-weight:600; background:var(--surface2); color:var(--text); border-top:1px solid var(--border); }
-        .yt-badge { position:absolute; top:8px; left:8px; background:var(--red); color:#fff; font-size:0.6rem; font-weight:800; padding:3px 6px; border-radius:4px; z-index:10; box-shadow:0 2px 5px rgba(0,0,0,0.5); animation:pulse 2s infinite; pointer-events:none; }
+        .party-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .party-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 15px; }
+        .party-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+        .ps-item { text-align: center; }
+        .ps-val { font-size: 1.1rem; font-weight: 800; line-height: 1; }
+        .ps-lbl { font-size: 0.55rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+        .party-desc { font-size: 0.7rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px; }
 
-        /* Social Cards */
-        .social-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; transition:border-color 0.2s; }
-        .social-card:hover { border-color:rgba(255,255,255,0.15); }
-        .social-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-        .social-avatar { width:32px; height:32px; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; border:1px solid rgba(255,255,255,0.1); }
-        .social-name { font-weight:700; font-size:0.8rem; color:var(--text); line-height:1.2; }
-        .social-handle { font-size:0.65rem; color:var(--muted); line-height:1.2; }
-        .x-logo { margin-left:auto; color:var(--muted); font-size:1.1rem; }
-        .social-text { font-size:0.8rem; color:var(--text); line-height:1.5; }
-        .news-card.compact { padding:12px; gap:6px; }
-        .news-card.compact .news-title { font-size:0.8rem; }
+        .trending-section { margin-bottom: 30px; }
+        .trending-title { font-size: 0.8rem; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; }
+        .trending-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .trending-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; }
+        .trending-party-small { position: absolute; bottom: 0; right: 0; background: #fff; border-radius: 50%; padding: 2px; }
+        .trending-name { font-weight: 800; font-size: 0.9rem; }
+        .t-vote-val { font-size: 0.9rem; font-weight: 800; color: var(--blue); }
+        .section-subtitle { font-size: 0.7rem; font-weight: 800; color: var(--muted); margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+
+        .footer { background: var(--surface2); padding: 15px 20px; font-size: 0.65rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: auto; border-top: 1px solid var(--border); }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: #fff; border-radius: 20px; padding: 30px; max-width: 450px; width: 100%; position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 15px; font-size: 24px; border: none; background: none; cursor: pointer; color: var(--muted); }
+        .modal-header-top { display: flex; gap: 20px; align-items: center; margin-bottom: 20px; }
+        .modal-votes-section { background: var(--blue); border-radius: 12px; padding: 20px; color: #fff; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
       `}</style>
     </>
   );

@@ -40,7 +40,6 @@ export default async function handler(req, res) {
   const npNums = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
   const toNpNum = (n) => n.toString().split('').map(c => npNums[parseInt(c)] || c).join('');
 
-  // Real constituency counts for major districts to ensure uniqueness
   const DISTRICT_CONFIG = [
     { en: 'Kathmandu', np: 'काठमाडौं', count: 10, prov: provinces[2] },
     { en: 'Jhapa', np: 'झापा', count: 5, prov: provinces[0] },
@@ -66,7 +65,6 @@ export default async function handler(req, res) {
     { en: 'Gorkha', np: 'गोरखा', count: 2, prov: provinces[3] }
   ];
 
-  // Generate all possible unique constituencies from config
   const pool = [];
   DISTRICT_CONFIG.forEach(d => {
     for (let i = 1; i <= d.count; i++) {
@@ -74,31 +72,51 @@ export default async function handler(req, res) {
     }
   });
 
+  const getRandCand = (seed) => {
+    const f = nepaliFirstNames[Math.floor(prng(seed) * nepaliFirstNames.length)];
+    const l = nepaliLastNames[Math.floor(prng(seed + 1) * nepaliLastNames.length)];
+    return { en: `${f.en} ${l.en}`, np: `${f.np} ${l.np}` };
+  };
+
   let declaredCount = 0;
   for (let i = 0; i < 165; i++) {
     const seed = (i + 1) * 1111;
     const item = pool[i] || { dEn: 'District', dNp: 'जिल्ला', num: i + 1, prov: provinces[i % 7] };
 
-    const rParty = prng(seed);
-    let partyAbbr = 'IND';
-    if (rParty < 0.3) partyAbbr = 'NC';
-    else if (rParty < 0.55) partyAbbr = 'CPN-UML';
-    else if (rParty < 0.75) partyAbbr = 'RSP';
-    else if (rParty < 0.85) partyAbbr = 'Maoist-C';
-    else if (rParty < 0.93) partyAbbr = 'RPP';
-    else partyAbbr = 'JSP';
-
-    const voteCap = 18000 + Math.floor(prng(seed + 1) * 25000);
+    // Realistic vote capping: Total counted around 17k - 25k max
+    const totalCounted = 15000 + Math.floor(prng(seed + 8) * 10000);
     const progress = Math.min(1, minutes / (2880 + prng(seed + 2) * 1000));
-    const jitter = Math.floor(prng(minutes + seed) * 400);
-    let votes = Math.floor(voteCap * progress) + jitter;
-    if (votes < 0) votes = 0;
+    const votesPool = Math.floor(totalCounted * progress);
 
     const isDeclared = progress > 0.99;
     if (isDeclared) declaredCount++;
 
-    const fName = nepaliFirstNames[Math.floor(prng(seed + 4) * nepaliFirstNames.length)];
-    const lName = nepaliLastNames[Math.floor(prng(seed + 5) * nepaliLastNames.length)];
+    // Generate top 4 candidates for this seat
+    const cands = [];
+    const partyPool = ['NC', 'CPN-UML', 'RSP', 'Maoist-C', 'RPP', 'JSP'];
+    let remainingVotes = votesPool;
+
+    for (let j = 0; j < 4; j++) {
+      const pIdx = (Math.floor(prng(seed + j * 10) * partyPool.length) + j) % partyPool.length;
+      const party = partyPool[pIdx];
+      const nameObj = getRandCand(seed + j * 20);
+
+      // Winner gets 40-50%, runner up 25-35%, etc.
+      let share = 0;
+      if (j === 0) share = 0.4 + prng(seed + 100) * 0.1;
+      else if (j === 1) share = 0.25 + prng(seed + 200) * 0.1;
+      else if (j === 2) share = 0.15 + prng(seed + 300) * 0.05;
+      else share = 0.05 + prng(seed + 400) * 0.05;
+
+      const v = Math.floor(votesPool * share);
+      cands.push({
+        name: nameObj.en,
+        nameNp: nameObj.np,
+        party: party,
+        votes: v,
+        rank: j + 1
+      });
+    }
 
     mockConstituencies.push({
       id: `con-${i + 1}`,
@@ -108,46 +126,65 @@ export default async function handler(req, res) {
       districtNp: item.dNp,
       province: item.prov.en,
       provinceNp: item.prov.np,
-      leadingCandidate: `${fName.en} ${lName.en}`,
-      leadingCandidateNp: `${fName.np} ${lName.np}`,
-      leadingParty: partyAbbr,
-      leadingVotes: votes,
-      margin: Math.floor(votes * (0.04 + prng(seed + 3) * 0.12)),
+      candidates: cands, // Now multiple candidates
+      leadingCandidate: cands[0].name,
+      leadingCandidateNp: cands[0].nameNp,
+      leadingParty: cands[0].party,
+      leadingVotes: cands[0].votes,
+      margin: cands[0].votes - cands[1].votes,
       status: isDeclared ? 'declared' : 'counting'
     });
   }
 
-  // Safely inject notable candidates into the top specific constituencies
+  // Notable Overrides (Injecting real data)
   const notableOverrides = [
-    { con: 'Jhapa-5', nameEn: 'Jhapa-5', nameNp: 'झापा-५', dEn: 'Jhapa', dNp: 'झापा', cEn: 'Balendra Shah', cNp: 'बालेन्द्र शाह', p: 'RSP' },
-    { con: 'Kathmandu-1', nameEn: 'Kathmandu-1', nameNp: 'काठमाडौं-१', dEn: 'Kathmandu', dNp: 'काठमाडौं', cEn: 'Ranju Neupane', cNp: 'रञ्जु न्‍यौपाने', p: 'RSP' },
-    { con: 'Banke-2', nameEn: 'Banke-2', nameNp: 'बाँके-२', dEn: 'Banke', dNp: 'बाँके', cEn: 'Mohammad Istiyak Rai', cNp: 'मोहम्मद इस्तियाक राई', p: 'CPN-UML' },
-    { con: 'Taplejung-1', nameEn: 'Taplejung-1', nameNp: 'ताप्लेजुङ-१', dEn: 'Taplejung', dNp: 'ताप्लेजुङ', cEn: 'Gajendra Prasad Tumyang Limbu', cNp: 'गजेन्द्र प्रसाद तुम्याङ लिम्बु', p: 'NC' },
+    {
+      con: 'Jhapa-5',
+      cands: [
+        { name: 'Balendra Shah', nameNp: 'बालेन्द्र शाह', party: 'RSP', votes: 19820 },
+        { name: 'KP Sharma Oli', nameNp: 'केपी शर्मा ओली', party: 'CPN-UML', votes: 17450 },
+        { name: 'Bishwaraj Baniya', nameNp: 'विश्वराज बानियाँ', party: 'NC', votes: 4200 },
+        { name: 'Khagendra Adhikari', nameNp: 'खगेन्द्र अधिकारी', party: 'IND', votes: 1100 }
+      ]
+    },
+    {
+      con: 'Kathmandu-1',
+      cands: [
+        { name: 'Ranju Neupane', nameNp: 'रञ्जु न्‍यौपाने', party: 'RSP', votes: 12450 },
+        { name: 'Prakash Man Singh', nameNp: 'प्रकाशमान सिंह', party: 'NC', votes: 10100 },
+        { name: 'Kiran Paudel', nameNp: 'किरण पौडेल', party: 'CPN-UML', votes: 3400 },
+        { name: 'Rabindra Mishra', nameNp: 'रविन्द्र मिश्र', party: 'RPP', votes: 2900 }
+      ]
+    },
+    {
+      con: 'Banke-2',
+      cands: [
+        { name: 'Mohammad Istiyak Rai', nameNp: 'मोहम्मद इस्तियाक राई', party: 'CPN-UML', votes: 14500 },
+        { name: 'Surendra Hamal', nameNp: 'सुरेन्द्र हमाल', party: 'NC', votes: 12200 },
+        { name: 'Santosh Kumar Kanaujiya', nameNp: 'सन्तोष कुमार कनौजिया', party: 'RSP', votes: 2100 },
+        { name: 'Pramod Singh', nameNp: 'प्रमोद सिंह', party: 'IND', votes: 500 }
+      ]
+    },
+    {
+      con: 'Taplejung-1',
+      cands: [
+        { name: 'Gajendra Prasad Tumyang Limbu', nameNp: 'गजेन्द्र प्रसाद तुम्याङ लिम्बु', party: 'NC', votes: 11200 },
+        { name: 'Yogesh Bhattarai', nameNp: 'योगेश भट्टराई', party: 'CPN-UML', votes: 10850 },
+        { name: 'Passang Sherpa', nameNp: 'पासाङ शेर्पा', party: 'RPP', votes: 1100 },
+        { name: 'Amrit Limbu', nameNp: 'अमृत लिम्बु', party: 'IND', votes: 400 }
+      ]
+    }
   ];
 
-  notableOverrides.forEach(override => {
-    const existing = mockConstituencies.find(c => c.name === override.con);
+  notableOverrides.forEach(ov => {
+    const existing = mockConstituencies.find(c => c.name === ov.con);
     if (existing) {
-      existing.leadingCandidate = override.cEn;
-      existing.leadingCandidateNp = override.cNp;
-      existing.leadingParty = override.p;
-      existing.leadingVotes += 8000;
-    } else {
-      mockConstituencies.push({
-        id: `con-over-${override.con}`,
-        name: override.nameEn,
-        nameNp: override.nameNp,
-        district: override.dEn,
-        districtNp: override.dNp,
-        province: override.pEn || 'Bagmati',
-        provinceNp: override.pNp || 'बागमती',
-        leadingCandidate: override.cEn,
-        leadingCandidateNp: override.cNp,
-        leadingParty: override.p,
-        leadingVotes: 25000,
-        margin: 4500,
-        status: 'counting'
-      });
+      existing.candidates = ov.cands.map((c, i) => ({ ...c, rank: i + 1 }));
+      existing.leadingCandidate = ov.cands[0].name;
+      existing.leadingCandidateNp = ov.cands[0].nameNp;
+      existing.leadingParty = ov.cands[0].party;
+      existing.leadingVotes = ov.cands[0].votes;
+      existing.margin = ov.cands[0].votes - ov.cands[1].votes;
     }
   });
 
@@ -158,6 +195,7 @@ export default async function handler(req, res) {
       abbr: p.abbr,
       color: p.color,
       logo: p.logo,
+      totalCandidates: Math.floor(100 + prng(p.id) * 65), // Simulated total contesting
       seats: mockConstituencies.filter(c => c.status === 'declared' && c.leadingParty === p.abbr).length,
       leading: mockConstituencies.filter(c => c.status === 'counting' && c.leadingParty === p.abbr).length,
     }
