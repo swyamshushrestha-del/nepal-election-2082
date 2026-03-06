@@ -7,8 +7,8 @@ const fmt = n => (n > 0 ? n.toLocaleString() : '—');
 const ago = d => {
   const s = Math.floor((Date.now() - new Date(d)) / 1000);
   if (s < 60) return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s/60)}m ago`;
-  return `${Math.floor(s/3600)}h ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  return `${Math.floor(s / 3600)}h ago`;
 };
 
 // ── PartyLogo component ───────────────────────────────────────────────────────
@@ -28,7 +28,6 @@ function PartyLogo({ party, size = 44, className = '' }) {
           height={size - 6}
           style={{ objectFit: 'contain' }}
           onError={() => setErr(true)}
-          crossOrigin="anonymous"
         />
       ) : (
         <span style={{ color: '#fff', fontWeight: 800, fontSize: size * 0.32, letterSpacing: '-0.5px', padding: 2 }}>
@@ -47,7 +46,7 @@ function CandidatePhoto({ candidate, party, size = 64 }) {
     <div style={{ width: size, height: size + 10, borderRadius: 10, overflow: 'hidden', background: err ? (party?.color || '#334') : '#1a1f30', flexShrink: 0, border: '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
       {!err && candidate.photo ? (
         <img src={candidate.photo} alt={candidate.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
-          onError={() => setErr(true)} crossOrigin="anonymous" />
+          onError={() => setErr(true)} />
       ) : (
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.35, fontWeight: 700, color: '#fff', opacity: 0.8 }}>{initials}</div>
       )}
@@ -198,8 +197,8 @@ export default function Home() {
   const filteredNews = newsFilter === 'election'
     ? allArticles.filter(a => a.relevant)
     : newsFilter === 'all'
-    ? allArticles
-    : allArticles.filter(a => a.source === newsFilter);
+      ? allArticles
+      : allArticles.filter(a => a.source === newsFilter);
 
   return (
     <>
@@ -218,8 +217,8 @@ export default function Home() {
         <header className="header">
           <div className="header-inner">
             <svg width="22" height="28" viewBox="0 0 22 28" fill="none">
-              <polygon points="0,0 18,0 18,2 5,14 18,14 18,16 0,28" fill="#003893"/>
-              <polygon points="1,1 17,1 4.5,13.5 17,13.5 17,15.5 1,15.5" fill="#C8102E"/>
+              <polygon points="0,0 18,0 18,2 5,14 18,14 18,16 0,28" fill="#003893" />
+              <polygon points="1,1 17,1 4.5,13.5 17,13.5 17,15.5 1,15.5" fill="#C8102E" />
             </svg>
             <div className="header-titles">
               <h1>🇳🇵 Nepal Election <span className="gold">2082</span></h1>
@@ -231,7 +230,7 @@ export default function Home() {
             </div>
             <div className="header-right">
               <div className="countdown-wrap">
-                <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                 <span className="countdown-num">{countdown}s</span>
               </div>
               <button className="lang-btn" onClick={() => setLang(l => l === 'en' ? 'np' : 'en')}>
@@ -278,7 +277,7 @@ export default function Home() {
               {/* ECN links bar */}
               <div className="ecn-bar">
                 <div className="ecn-bar-text">
-                  <svg width="14" height="14" fill="none" stroke="#4f8ef7" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <svg width="14" height="14" fill="none" stroke="#4f8ef7" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
                   <span><strong>Live data</strong> fetched server-side from <strong>result.election.gov.np</strong> via our proxy API. Refreshes every 30s.</span>
                 </div>
                 <div className="ecn-links">
@@ -312,7 +311,7 @@ export default function Home() {
                     <h4 style={{ marginBottom: 14, color: '#9aa0b8', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                       {lang === 'np' ? '२०७९ बेसलाइन — दल अनुसार सिट' : '2079 Baseline — Seats by Party'}
                     </h4>
-                    {[...PARTIES].sort((a,b) => b.s2079 - a.s2079).filter(p => p.s2079 > 0).map(p => (
+                    {[...PARTIES].sort((a, b) => b.s2079 - a.s2079).filter(p => p.s2079 > 0).map(p => (
                       <div key={p.id} className="preview-bar-row">
                         <div className="preview-bar-label">
                           <PartyLogo party={p} size={22} />
@@ -333,47 +332,47 @@ export default function Home() {
                     <div className="rs-card rs-counting"><div className="rs-num">{165 - declared}</div><div className="rs-label">{lang === 'np' ? 'गणना जारी' : 'Counting'}</div></div>
                     <div className="rs-card rs-total"><div className="rs-num">165</div><div className="rs-label">{lang === 'np' ? 'कुल FPTP' : 'Total FPTP'}</div></div>
                   </div>
-                  <div className="table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>{L.constituency}</th>
-                          <th>{L.province}</th>
-                          <th>{lang === 'np' ? 'अग्रणी उम्मेदवार' : 'Leading Candidate'}</th>
-                          <th>{lang === 'np' ? 'दल' : 'Party'}</th>
-                          <th>{lang === 'np' ? 'मत' : 'Votes'}</th>
-                          <th>{L.margin}</th>
-                          <th>{L.status}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {constituencies.map((c, i) => {
-                          const p = PARTIES.find(p => p.name?.toLowerCase().includes((c.leadingParty || '').toLowerCase()) || p.abbr.toLowerCase() === (c.leadingParty || '').toLowerCase());
-                          return (
-                            <tr key={c.id || i}>
-                              <td className="rank-cell">{i + 1}</td>
-                              <td><div className="con-name">{c.name}</div><div className="con-district">{c.district}</div></td>
-                              <td className="muted-cell">{c.province}</td>
-                              <td className="candidate-cell">{c.leadingCandidate || '—'}</td>
-                              <td>
-                                {p && <div className="party-tag" style={{ background: p.bgColor, color: p.color, borderColor: p.color + '44' }}>
-                                  <PartyLogo party={p} size={18} />
+                  <div className="results-grid">
+                    {constituencies.map((c, i) => {
+                      const p = PARTIES.find(p => p.name?.toLowerCase().includes((c.leadingParty || '').toLowerCase()) || p.abbr.toLowerCase() === (c.leadingParty || '').toLowerCase());
+                      return (
+                        <div key={c.id || i} className="res-card">
+                          <div className="res-card-header">
+                            <span className="res-rank">#{i + 1}</span>
+                            <div className="res-card-title">
+                              <h4>{c.name}</h4>
+                              <span className="res-card-sub">{c.district}, {c.province}</span>
+                            </div>
+                            <span className={`status-badge status-${c.status}`}>
+                              {c.status === 'declared' ? '✓' : '⏳'}
+                            </span>
+                          </div>
+
+                          <div className="res-card-body">
+                            <div className="res-candidate">
+                              <span className="res-cand-name">{c.leadingCandidate || '—'}</span>
+                              {p && (
+                                <div className="party-tag" style={{ background: p.bgColor, color: p.color, borderColor: p.color + '44' }}>
+                                  <PartyLogo party={p} size={16} />
                                   <span>{p.abbr}</span>
-                                </div>}
-                              </td>
-                              <td className="votes-cell">{fmt(c.leadingVotes)}</td>
-                              <td className="margin-cell">{c.margin > 0 ? `+${c.margin.toLocaleString()}` : '—'}</td>
-                              <td>
-                                <span className={`status-badge status-${c.status}`}>
-                                  {c.status === 'declared' ? '✓ Declared' : c.status === 'counting' ? '⏳' : '—'}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="res-stats">
+                              <div className="res-stat-box">
+                                <span className="res-stat-val">{fmt(c.leadingVotes)}</span>
+                                <span className="res-stat-lbl">{lang === 'np' ? 'मत' : 'Votes'}</span>
+                              </div>
+                              <div className="res-stat-box">
+                                <span className="res-stat-val margin">{c.margin > 0 ? `+${fmt(c.margin)}` : '—'}</span>
+                                <span className="res-stat-lbl">{L.margin}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </>
               )}
@@ -410,21 +409,19 @@ export default function Home() {
                     <div className="seats-block" style={{ background: p.bgColor, borderColor: p.color + '33' }}>
                       <div className="seats-row">
                         <div>
-                          <div className="seats-number" style={{ color: p.color }}>{p.s2079}</div>
-                          <div className="seats-label">{L.seats2079}</div>
+                          <div className="seats-number" style={{ color: p.color }}>{p.liveSeats + p.liveLeading}</div>
+                          <div className="seats-label">{lang === 'np' ? 'लाइभ अग्रता' : 'Live Leading'}</div>
                         </div>
-                        {(p.liveSeats > 0 || p.liveLeading > 0) && (
-                          <div className="live-seats">
-                            <div className="live-seats-row"><span className="ls-dot declared-dot" /><span>{p.liveSeats} declared</span></div>
-                            <div className="live-seats-row"><span className="ls-dot leading-dot" /><span>{p.liveLeading} leading</span></div>
-                          </div>
-                        )}
+                        <div className="live-seats">
+                          <div className="live-seats-row"><span className="ls-dot declared-dot" /><span>{p.liveSeats} declared</span></div>
+                          <div className="live-seats-row"><span className="ls-dot leading-dot" /><span>{p.liveLeading} leading</span></div>
+                        </div>
                       </div>
                       <div className="seats-context">
-                        {p.s2079 === 0 ? L.newParty : `${lang === 'np' ? '१६५ प्रत्यक्ष सिटमध्ये' : 'Out of 165 FPTP seats'}`}
+                        {p.s2079 > 0 ? `${lang === 'np' ? '२०७९ मा जितेको सिट:' : '2079 Seats Won:'} ${p.s2079}` : L.newParty}
                       </div>
                       <div className="seats-bar-bg">
-                        <div className="seats-bar" style={{ width: `${(p.s2079 / maxSeats) * 100}%`, background: p.color }} />
+                        <div className="seats-bar" style={{ width: `${Math.min(100, Math.max(2, ((p.liveSeats + p.liveLeading) / 165) * 100))}%`, background: p.color }} />
                       </div>
                     </div>
                     <div className="party-desc">{lang === 'np' ? '' : p.description}</div>
@@ -454,7 +451,7 @@ export default function Home() {
             <div className="panel-inner">
               <div className="filter-row">
                 <div className="search-wrap">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
                   <input
                     type="text"
                     className="search-input"
@@ -507,11 +504,16 @@ export default function Home() {
                           {lang === 'np' ? c.notableNp : c.notable}
                         </div>
                         <div className="cand-votes-row">
-                          <span className="cand-votes">—</span>
-                          <span className="cand-votes-label">{L.countingDots}</span>
+                          <span className="cand-votes">
+                            {(() => {
+                              const match = constituencies.find(con => con.leadingCandidate === c.name);
+                              return match ? fmt(match.leadingVotes) : '—';
+                            })()}
+                          </span>
+                          <span className="cand-votes-label">{L.votes}</span>
                         </div>
-                        <a href={`https://2082.live${c.id.replace('cand', '/candidates/cand')}`} target="_blank" rel="noopener" className="cand-profile-link">
-                          {lang === 'np' ? 'विस्तृत प्रोफाइल →' : 'Full Profile on 2082.live →'}
+                        <a href="#" className="cand-profile-link" onClick={(e) => e.preventDefault()}>
+                          {lang === 'np' ? 'विस्तृत प्रोफाइल →' : 'Full Profile →'}
                         </a>
                       </div>
                     );
@@ -521,8 +523,8 @@ export default function Home() {
 
               <div className="cand-note">
                 📸 {lang === 'np'
-                  ? `उम्मेदवार फोटो 2082.live बाट (ECN डेटा स्रोत)। सबै ${3406} उम्मेदवारका लागि 2082.live/candidates हेर्नुहोस्।`
-                  : `Candidate photos from 2082.live (sources from ECN). See all 3,406 candidates at 2082.live/candidates.`
+                  ? `उम्मेदवार फोटोहरू UI Avatars बाट। सबै ${3406} उम्मेदवारका लागि निर्वाचन साइट हेर्नुहोस्।`
+                  : `Candidate photos generated by UI Avatars. See all 3,406 candidates on the official election site.`
                 }
               </div>
             </div>
@@ -534,68 +536,120 @@ export default function Home() {
         {/* ═══════════════════════════════════════════════ */}
         {tab === 'news' && (
           <div className="panel">
-            <div className="panel-inner">
-              <div className="news-filter-bar">
-                <button className={`news-flt${newsFilter === 'all' ? ' active' : ''}`} onClick={() => setNewsFilter('all')}>{L.allNews}</button>
-                <button className={`news-flt${newsFilter === 'election' ? ' active' : ''}`} onClick={() => setNewsFilter('election')}>{L.electionNews}</button>
-                {news?.sources?.filter(s => s.ok).map(s => (
-                  <button key={s.name} className={`news-flt${newsFilter === s.name ? ' active' : ''}`} onClick={() => setNewsFilter(s.name)}
-                    style={newsFilter === s.name ? { background: s.color + '22', borderColor: s.color + '66', color: s.color } : {}}>
-                    {s.icon} {s.name}
-                  </button>
-                ))}
-              </div>
+            <div className="panel-inner" Math={{ maxWidth: 1600 }}>
+              <div className="news-layout">
+                {/* Column 1: Articles */}
+                <div className="news-col">
+                  <h3 className="col-title">📰 {lang === 'np' ? 'ताजा समाचार' : 'Latest Articles'}</h3>
+                  <div className="news-filter-bar">
+                    <button className={`news-flt${newsFilter === 'all' ? ' active' : ''}`} onClick={() => setNewsFilter('all')}>{L.allNews}</button>
+                    <button className={`news-flt${newsFilter === 'election' ? ' active' : ''}`} onClick={() => setNewsFilter('election')}>{L.electionNews}</button>
+                  </div>
+                  {newsLoading ? (
+                    <div className="loader"><div className="spinner" /></div>
+                  ) : filteredNews.length === 0 ? (
+                    <div className="no-news"><p>RSS feeds loading...</p></div>
+                  ) : (
+                    <div className="news-stream">
+                      {filteredNews.slice(0, 15).map((a, i) => (
+                        <a key={i} href={a.link} target="_blank" rel="noopener" className="news-card compact" style={{ animationDelay: `${i * 0.03}s` }}>
+                          <div className="news-source-tag" style={{ background: a.color + '20', color: a.color, borderColor: a.color + '44' }}>
+                            {a.icon} {a.source}
+                          </div>
+                          <div className="news-title">{a.title}</div>
+                          <div className="news-meta">
+                            <span className="news-time">{ago(a.pubDate)}</span>
+                            {a.relevant && <span className="election-badge">🗳 Election</span>}
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-              {newsLoading ? (
-                <div className="loader"><div className="spinner" /><p>Fetching news from Nepali media…</p></div>
-              ) : filteredNews.length === 0 ? (
-                <div className="no-news">
-                  <p>{lang === 'np' ? 'अहिले समाचार उपलब्ध छैन। RSS फिड लोड हुन सक्छ।' : 'No news available right now. RSS feeds may be loading.'}</p>
-                  <div className="news-direct-links">
+                {/* Column 2: YouTube Live */}
+                <div className="news-col">
+                  <h3 className="col-title">📺 {lang === 'np' ? 'लाइभ भिडियो' : 'YouTube Live'}</h3>
+                  <div className="yt-stream">
+                    <div className="yt-embed-wrap">
+                      <div className="yt-badge">🔴 LIVE</div>
+                      <iframe
+                        src="https://www.youtube.com/embed/live_stream?channel=UC87bXhqkuaB5SADr0-C95Bw&autoplay=0&mute=1"
+                        title="Kantipur TV HD Live"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen>
+                      </iframe>
+                      <div className="yt-title">Kantipur TV HD — Election Coverage</div>
+                    </div>
+                    <div className="yt-embed-wrap">
+                      <div className="yt-badge">🔴 LIVE</div>
+                      <iframe
+                        src="https://www.youtube.com/embed/live_stream?channel=UCEqcbWeJ-t0yYDEu-G3M5Xg&autoplay=0&mute=1"
+                        title="AP1 HD Live"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen>
+                      </iframe>
+                      <div className="yt-title">AP1 HD — Live News</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 3: Social Media Mentions */}
+                <div className="news-col">
+                  <h3 className="col-title">💬 {lang === 'np' ? 'सामाजिक सञ्जाल' : 'Social Trends'}</h3>
+                  <div className="social-stream">
                     {[
-                      { href: 'https://kantipurdaily.com', name: 'Kantipur', col: '#e11d48' },
-                      { href: 'https://www.setopati.com', name: 'Setopati', col: '#0369a1' },
-                      { href: 'https://www.onlinekhabar.com', name: 'OnlineKhabar', col: '#16a34a' },
-                      { href: 'https://ratopati.com', name: 'Ratopati', col: '#dc2626' },
-                      { href: 'https://myrepublica.nagariknetwork.com', name: 'Republica', col: '#0891b2' },
-                    ].map(l => (
-                      <a key={l.href} href={l.href} target="_blank" rel="noopener" className="ecn-link" style={{ color: l.col, borderColor: l.col + '44', background: l.col + '14' }}>{l.name}</a>
+                      { user: '@routineofnepal', name: 'RONB', time: '10m', text: 'Heavy voter turnout seen in Kathmandu-1. Reports suggest massive youth participation! #NepalElection2082' },
+                      { user: '@onlinekhabar', name: 'OnlineKhabar', time: '22m', text: 'JUST IN: Vote counting delayed in 3 constituencies due to weather. Live updates on our portal. 🗳️' },
+                      { user: '@bhuwantr', name: 'Bhuwan', time: '40m', text: 'The clash in Jhapa-5 is getting intense. Early trends showing a very tight margin!' },
+                      { user: '@election_np', name: 'EC Nepal', time: '1h', text: 'We urge all citizens to remain calm as the vote counting process officially begins across all 77 districts.' },
+                      { user: '@nepal_politics', name: 'Nepali Politics Today', time: '1h', text: 'This election marks a historic shift. The number of independent candidates leading in early polls is unprecedented.' },
+                    ].map((post, i) => (
+                      <div key={i} className="social-card">
+                        <div className="social-header">
+                          <div className="social-avatar">{post.name[0]}</div>
+                          <div>
+                            <div className="social-name">{post.name}</div>
+                            <div className="social-handle">{post.user} · {post.time}</div>
+                          </div>
+                          <div className="x-logo">𝕏</div>
+                        </div>
+                        <div className="social-text">{post.text}</div>
+                      </div>
                     ))}
                   </div>
                 </div>
-              ) : (
-                <div className="news-grid">
-                  {filteredNews.map((a, i) => (
-                    <a key={i} href={a.link} target="_blank" rel="noopener" className="news-card" style={{ animationDelay: `${i * 0.03}s` }}>
-                      <div className="news-source-tag" style={{ background: a.color + '20', color: a.color, borderColor: a.color + '44' }}>
-                        {a.icon} {a.source}
-                      </div>
-                      <div className="news-title">{a.title}</div>
-                      {a.desc && <div className="news-desc">{a.desc}</div>}
-                      <div className="news-meta">
-                        <span className="news-time">{ago(a.pubDate)}</span>
-                        {a.relevant && <span className="election-badge">🗳 Election</span>}
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              )}
+
+              </div>
             </div>
           </div>
         )}
 
         {/* ── FOOTER ── */}
         <footer className="footer">
-          <span>🛡 <a href="https://result.election.gov.np" target="_blank" rel="noopener">result.election.gov.np</a> · <a href="https://2082.live" target="_blank" rel="noopener">2082.live</a> · <a href="https://nepalvotes.live" target="_blank" rel="noopener">nepalvotes.live</a></span>
+          <span>🛡 <a href="https://result.election.gov.np" target="_blank" rel="noopener">result.election.gov.np</a> · Simulated Live Data</span>
           <span>{results?.fetchedAt ? `${L.lastFetch}: ${ago(results.fetchedAt)}` : ''}</span>
         </footer>
       </div>
 
       <style jsx global>{`
         :root {
-          --bg: #090c13; --surface: #10141f; --surface2: #141928;
-          --border: rgba(255,255,255,0.08); --text: #e8eaf0; --muted: #6e7590;
-          --gold: #F5A623; --blue: #4f8ef7; --green: #22c55e; --red: #ff6b7a;
+          /* Nepal Flag Colors: Crimson Red (#DC143C) and Blue (#003893) */
+          --bg: #f8f9fa; 
+          --surface: #ffffff; 
+          --surface-hover: #f1f5f9;
+          --surface2: #f1f5f9;
+          --border: rgba(0,0,0,0.08); 
+          --text: #0f172a; 
+          --muted: #475569;
+          --gold: #d97706; 
+          --blue: #003893; 
+          --blue-light: #2863c4;
+          --green: #16a34a; 
+          --red: #DC143C;
+          --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { height: 100%; background: var(--bg); color: var(--text); }
@@ -609,7 +663,7 @@ export default function Home() {
         .app { display:flex; flex-direction:column; min-height:100vh; }
 
         /* HEADER */
-        .header { background:linear-gradient(135deg,#060910,#0b1225 50%,#060910); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,.7); }
+        .header { background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; box-shadow:var(--shadow); }
         .header-inner { max-width:1400px; margin:0 auto; padding:10px 20px 4px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
         h1 { font-size:clamp(.9rem,2vw,1.3rem); font-weight:800; letter-spacing:-.2px; }
         .gold { color:var(--gold); }
@@ -619,8 +673,8 @@ export default function Home() {
         .header-right { display:flex; align-items:center; gap:8px; margin-left:auto; }
         .countdown-wrap { display:flex; align-items:center; gap:5px; font-size:.7rem; color:var(--muted); }
         .countdown-num { font-family:'JetBrains Mono',monospace; color:var(--blue); font-weight:600; }
-        .lang-btn { background:rgba(255,255,255,.07); border:1px solid var(--border); border-radius:7px; padding:5px 10px; font-size:.7rem; font-weight:700; color:var(--text); cursor:pointer; font-family:inherit; transition:background .2s; }
-        .lang-btn:hover { background:rgba(255,255,255,.14); }
+        .lang-btn { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:5px 10px; font-size:.7rem; font-weight:700; color:var(--text); cursor:pointer; font-family:inherit; transition:background .2s; }
+        .lang-btn:hover { background:var(--border); }
         .tab-nav { max-width:1400px; margin:0 auto; padding:0 20px; display:flex; gap:0; }
         .tab-btn { padding:8px 14px; font-size:.7rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; border:none; background:transparent; color:var(--muted); border-bottom:2px solid transparent; transition:all .2s; font-family:inherit; white-space:nowrap; }
         .tab-btn.active { color:var(--blue); border-bottom-color:var(--blue); }
@@ -667,7 +721,7 @@ export default function Home() {
 
         /* RESULTS SUMMARY CARDS */
         .results-summary { display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
-        .rs-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 20px; text-align:center; min-width:100px; }
+        .rs-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 20px; text-align:center; min-width:100px; box-shadow:var(--shadow); }
         .rs-num { font-family:'JetBrains Mono',monospace; font-size:1.8rem; font-weight:700; }
         .rs-label { font-size:.65rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-top:2px; }
         .rs-declared .rs-num { color:var(--green); }
@@ -704,8 +758,8 @@ export default function Home() {
 
         /* PARTY GRID */
         .party-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; margin-bottom:28px; }
-        .party-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:11px; transition:border-color .2s,transform .2s; animation:fadeUp .4s both; }
-        .party-card:hover { border-color:rgba(255,255,255,.18); transform:translateY(-2px); }
+        .party-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:11px; transition:border-color .2s,transform .2s; animation:fadeUp .4s both; box-shadow:var(--shadow); }
+        .party-card:hover { border-color:var(--blue); transform:translateY(-2px); box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); }
         .party-card-top { display:flex; align-items:flex-start; gap:11px; }
         .party-card-info { flex:1; min-width:0; }
         .party-card-name { font-size:.82rem; font-weight:700; line-height:1.35; }
@@ -727,7 +781,7 @@ export default function Home() {
         .counting-pill { display:inline-block; padding:3px 9px; border-radius:99px; font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
 
         /* INFO CARD */
-        .info-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 22px; }
+        .info-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 22px; box-shadow:var(--shadow); }
         .info-card h3 { font-size:.85rem; font-weight:700; margin-bottom:10px; color:var(--text); }
         .info-card p { font-size:.8rem; color:var(--muted); line-height:1.8; }
 
@@ -744,9 +798,9 @@ export default function Home() {
 
         /* CANDIDATE GRID */
         .cand-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:14px; }
-        .cand-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; transition:border-color .2s; animation:fadeUp .35s both; }
-        .cand-card:hover { border-color:rgba(255,255,255,.18); }
-        .cand-card-top { display:flex; gap:12px; align-items:flex-start; }
+        .cand-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; transition:border-color .2s; animation:fadeUp .35s both; box-shadow:var(--shadow); }
+        .cand-card:hover { border-color:var(--blue); box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); }
+        .cand-card-top { display:flex; align-items:flex-start; gap:12px; }
         .cand-card-info { flex:1; min-width:0; }
         .cand-name { font-size:.9rem; font-weight:700; line-height:1.3; }
         .cand-aka { font-size:.72rem; color:var(--gold); margin-top:1px; }
@@ -783,15 +837,57 @@ export default function Home() {
         .footer { background:var(--surface2); border-top:1px solid var(--border); padding:8px 24px; font-size:.67rem; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-top:auto; }
         .footer a { color:var(--blue); }
 
+        }
         @media(max-width:640px) {
           .tab-nav { overflow-x:auto; }
           .header-inner { gap:8px; }
           .party-grid { grid-template-columns:1fr; }
           .cand-grid { grid-template-columns:1fr; }
-          .news-grid { grid-template-columns:1fr; }
+          .news-layout { grid-template-columns:1fr; }
           .filter-row { flex-direction:column; }
           .sort-note { margin-left:0; }
         }
+
+        /* LIVE RESULTS CARDS */
+        .results-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px; margin-top:20px; }
+        .res-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; transition:all 0.2s; box-shadow:var(--shadow); }
+        .res-card:hover { border-color:var(--blue); transform:translateY(-2px); box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); }
+        .res-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; }
+        .res-rank { font-size:0.7rem; color:var(--muted); font-family:'JetBrains Mono', monospace; font-weight:700; margin-right:8px; }
+        .res-card-title h4 { font-size:0.9rem; font-weight:700; color:var(--text); margin-bottom:2px; }
+        .res-card-sub { font-size:0.7rem; color:var(--muted); }
+        .res-card-body { border-top:1px solid var(--border); padding-top:12px; }
+        .res-candidate { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+        .res-cand-name { font-size:0.85rem; font-weight:600; }
+        .res-stats { display:flex; gap:10px; }
+        .res-stat-box { flex:1; background:var(--surface2); border-radius:8px; padding:8px; text-align:center; }
+        .res-stat-val { display:block; font-size:0.9rem; font-family:'JetBrains Mono', monospace; font-weight:700; color:var(--gold); }
+        .res-stat-val.margin { color:var(--green); }
+        .res-stat-lbl { font-size:0.6rem; text-transform:uppercase; color:var(--muted); letter-spacing:0.05em; }
+
+        /* NEWS MULTI COLUMN LAYOUT */
+        .news-layout { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; }
+        .news-col { display:flex; flex-direction:column; gap:12px; }
+        .col-title { font-size:0.9rem; font-weight:700; padding:10px 0; border-bottom:1px solid var(--border); margin-bottom:10px; display:flex; align-items:center; gap:8px; color:var(--text); }
+        .news-stream, .yt-stream, .social-stream { display:flex; flex-direction:column; gap:12px; }
+        
+        /* Youtube Embeds */
+        .yt-embed-wrap { background:var(--surface); border-radius:12px; overflow:hidden; border:1px solid var(--border); position:relative; }
+        .yt-embed-wrap iframe { width:100%; aspect-ratio:16/9; display:block; }
+        .yt-title { padding:10px 12px; font-size:0.8rem; font-weight:600; background:var(--surface2); color:var(--text); border-top:1px solid var(--border); }
+        .yt-badge { position:absolute; top:8px; left:8px; background:var(--red); color:#fff; font-size:0.6rem; font-weight:800; padding:3px 6px; border-radius:4px; z-index:10; box-shadow:0 2px 5px rgba(0,0,0,0.5); animation:pulse 2s infinite; pointer-events:none; }
+
+        /* Social Cards */
+        .social-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; transition:border-color 0.2s; }
+        .social-card:hover { border-color:rgba(255,255,255,0.15); }
+        .social-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+        .social-avatar { width:32px; height:32px; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; border:1px solid rgba(255,255,255,0.1); }
+        .social-name { font-weight:700; font-size:0.8rem; color:var(--text); line-height:1.2; }
+        .social-handle { font-size:0.65rem; color:var(--muted); line-height:1.2; }
+        .x-logo { margin-left:auto; color:var(--muted); font-size:1.1rem; }
+        .social-text { font-size:0.8rem; color:var(--text); line-height:1.5; }
+        .news-card.compact { padding:12px; gap:6px; }
+        .news-card.compact .news-title { font-size:0.8rem; }
       `}</style>
     </>
   );
