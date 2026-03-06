@@ -75,6 +75,7 @@ export default function Home() {
   const [candParty, setCandParty] = useState('');
   const [candProv, setCandProv] = useState('');
   const [newsFilter, setNewsFilter] = useState('all');
+  const [selectedCand, setSelectedCand] = useState(null);
   const timerRef = useRef(null);
 
   const L = lang === 'en' ? {
@@ -188,8 +189,22 @@ export default function Home() {
     return true;
   });
 
-  // ── Constituencies ────────────────────────────────────────────────────────
-  const constituencies = (results?.constituencies || []).sort((a, b) => a.leadingVotes - b.leadingVotes);
+  // ── Constituencies & Sorting ────────────────────────────────────────────────
+  const [resSort, setResSort] = useState('serial'); // 'serial' | 'margin' | 'votes'
+
+  const constituencies = (results?.constituencies || []).sort((a, b) => {
+    if (resSort === 'serial') {
+      // Sort alphabetically by District then by the Constituency number (1, 2, 3...)
+      const dCmp = a.district.localeCompare(b.district);
+      if (dCmp !== 0) return dCmp;
+      const numA = parseInt(a.name.split('-')[1]) || 0;
+      const numB = parseInt(b.name.split('-')[1]) || 0;
+      return numA - numB;
+    }
+    if (resSort === 'margin') return b.margin - a.margin;
+    return b.leadingVotes - a.leadingVotes;
+  });
+
   const declared = constituencies.filter(c => c.status === 'declared').length;
 
   // ── News filter ───────────────────────────────────────────────────────────
@@ -209,7 +224,7 @@ export default function Home() {
         <meta property="og:title" content={L.title} />
         <meta property="og:description" content="Live results dashboard for Nepal's Pratinidhi Sabha Election 2082" />
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇳🇵</text></svg>" />
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
       <div className={`app${lang === 'np' ? ' np' : ''}`}>
@@ -221,7 +236,7 @@ export default function Home() {
               <polygon points="1,1 17,1 4.5,13.5 17,13.5 17,15.5 1,15.5" fill="#C8102E" />
             </svg>
             <div className="header-titles">
-              <h1>🇳🇵 Nepal Election <span className="gold">2082</span></h1>
+              <h1>🇳🇵 Nepal Election 2082</h1>
               <p className="header-sub">{L.sub}</p>
             </div>
             <div className="live-pill">
@@ -274,23 +289,35 @@ export default function Home() {
         {tab === 'results' && (
           <div className="panel">
             <div className="panel-inner">
-              {/* ECN links bar */}
-              <div className="ecn-bar">
-                <div className="ecn-bar-text">
-                  <svg width="14" height="14" fill="none" stroke="#4f8ef7" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                  <span><strong>Live data</strong> fetched server-side from <strong>result.election.gov.np</strong> via our proxy API. Refreshes every 30s.</span>
+
+              <div className="controls-row">
+                {/* ECN links bar */}
+                <div className="ecn-bar">
+                  <div className="ecn-bar-text">
+                    <svg width="14" height="14" fill="none" stroke="#4f8ef7" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                    <span><strong>Live data</strong> fetched server-side from <strong>result.election.gov.np</strong> via our proxy API. Refreshes every 30s.</span>
+                  </div>
+                  <div className="ecn-links">
+                    {[
+                      { href: 'https://result.election.gov.np', label: '🏛 ECN Official', color: '#ff6b7a' },
+                      { href: 'https://nepalvotes.live', label: '📊 nepalvotes.live', color: '#4f8ef7' },
+                      { href: 'https://election.nepsebajar.com/en', label: '📋 nepsebajar', color: '#d97706' },
+                      { href: 'https://election.onlinekhabar.com', label: '🌐 OnlineKhabar', color: '#16a34a' },
+                    ].map(l => (
+                      <a key={l.href} href={l.href} target="_blank" rel="noopener" className="ecn-link" style={{ color: l.color, borderColor: l.color + '44', background: l.color + '14' }}>
+                        {l.label}
+                      </a>
+                    ))}
+                  </div>
                 </div>
-                <div className="ecn-links">
-                  {[
-                    { href: 'https://result.election.gov.np', label: '🏛 ECN Official', color: '#ff6b7a' },
-                    { href: 'https://nepalvotes.live', label: '📊 nepalvotes.live', color: '#4f8ef7' },
-                    { href: 'https://election.nepsebajar.com/en', label: '📋 nepsebajar', color: '#F5A623' },
-                    { href: 'https://election.onlinekhabar.com', label: '🌐 OnlineKhabar', color: '#22c55e' },
-                  ].map(l => (
-                    <a key={l.href} href={l.href} target="_blank" rel="noopener" className="ecn-link" style={{ color: l.color, borderColor: l.color + '44', background: l.color + '14' }}>
-                      {l.label}
-                    </a>
-                  ))}
+
+                <div className="sort-box">
+                  <label>{lang === 'np' ? 'क्रमबद्ध:' : 'Sort by:'}</label>
+                  <select value={resSort} onChange={e => setResSort(e.target.value)}>
+                    <option value="serial">{lang === 'np' ? 'जिल्ला (A-Z)' : 'District (A-Z)'}</option>
+                    <option value="margin">{lang === 'np' ? 'सर्वाधिक मतान्तर' : 'Highest Margin'}</option>
+                    <option value="votes">{lang === 'np' ? 'सर्वाधिक मत' : 'Highest Votes'}</option>
+                  </select>
                 </div>
               </div>
 
@@ -302,11 +329,10 @@ export default function Home() {
                   <h3>{lang === 'np' ? 'मत गणना जारी छ' : 'Vote counting in progress'}</h3>
                   <p>
                     {L.noData}{' '}
-                    <a href="https://result.election.gov.np" target="_blank" rel="noopener" style={{ color: '#4f8ef7' }}>result.election.gov.np</a>
+                    <a href="https://result.election.gov.np" target="_blank" rel="noopener" style={{ color: '#003893' }}>result.election.gov.np</a>
                     {' '}{lang === 'np' ? 'मा सिधै।' : 'directly.'}
                   </p>
                   <p className="no-data-sub">{lang === 'np' ? 'ECN सर्भर JS-rendered छ — API डेटा गणना सुरु हुँदा देखिनेछ।' : 'ECN server is JS-rendered — API data will appear as counting begins.'}</p>
-                  {/* Show party bar chart even with no live data */}
                   <div className="party-bar-preview">
                     <h4 style={{ marginBottom: 14, color: '#9aa0b8', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                       {lang === 'np' ? '२०७९ बेसलाइन — दल अनुसार सिट' : '2079 Baseline — Seats by Party'}
@@ -335,13 +361,18 @@ export default function Home() {
                   <div className="results-grid">
                     {constituencies.map((c, i) => {
                       const p = PARTIES.find(p => p.name?.toLowerCase().includes((c.leadingParty || '').toLowerCase()) || p.abbr.toLowerCase() === (c.leadingParty || '').toLowerCase());
+                      const cName = lang === 'np' ? (c.nameNp || c.name) : c.name;
+                      const cDist = lang === 'np' ? (c.districtNp || c.district) : c.district;
+                      const cProv = lang === 'np' ? (c.provinceNp || c.province) : c.province;
+                      const cCand = lang === 'np' ? (c.leadingCandidateNp || c.leadingCandidate) : c.leadingCandidate;
+
                       return (
                         <div key={c.id || i} className="res-card">
                           <div className="res-card-header">
-                            <span className="res-rank">#{i + 1}</span>
+                            <span className="res-rank">#{resSort === 'serial' ? (i + 1) : (i + 1)}</span>
                             <div className="res-card-title">
-                              <h4>{c.name}</h4>
-                              <span className="res-card-sub">{c.district}, {c.province}</span>
+                              <h4>{cName}</h4>
+                              <span className="res-card-sub">{cDist}, {cProv}</span>
                             </div>
                             <span className={`status-badge status-${c.status}`}>
                               {c.status === 'declared' ? '✓' : '⏳'}
@@ -350,11 +381,11 @@ export default function Home() {
 
                           <div className="res-card-body">
                             <div className="res-candidate">
-                              <span className="res-cand-name">{c.leadingCandidate || '—'}</span>
+                              <span className="res-cand-name">{cCand || '—'}</span>
                               {p && (
                                 <div className="party-tag" style={{ background: p.bgColor, color: p.color, borderColor: p.color + '44' }}>
                                   <PartyLogo party={p} size={16} />
-                                  <span>{p.abbr}</span>
+                                  <span>{lang === 'np' && p.nameNp ? p.nameNp : p.abbr}</span>
                                 </div>
                               )}
                             </div>
@@ -472,49 +503,52 @@ export default function Home() {
                     <option key={p} value={p}>{p}</option>
                   ))}
                 </select>
-                <span className="sort-note">↑ {lang === 'np' ? 'मत अनुसार बढ्दो' : 'Sorted by votes (ascending)'}</span>
+                <span className="sort-note">↑ {lang === 'np' ? 'मत अनुसार' : 'Sorted by votes'}</span>
               </div>
 
               {filteredCands.length === 0 ? (
                 <p className="empty-msg">{lang === 'np' ? 'कुनै उम्मेदवार फेला परेन।' : 'No candidates match your filters.'}</p>
               ) : (
-                <div className="cand-grid">
+                <div className="cand-list">
                   {filteredCands.map((c, i) => {
                     const p = PARTY_BY_ID[c.partyId];
+                    const match = constituencies.find(con => con.leadingCandidate === c.name || con.leadingCandidateNp === c.name || con.leadingCandidate === c.nameNp);
                     return (
-                      <div key={c.id} className="cand-card" style={{ animationDelay: `${i * 0.04}s` }}>
-                        <div className="cand-card-top">
-                          <CandidatePhoto candidate={c} party={p} size={64} />
-                          <div className="cand-card-info">
-                            <div className="cand-name">{lang === 'np' ? c.nameNp : c.name}</div>
-                            {c.aka && <div className="cand-aka">"{c.aka}"</div>}
-                            <div className="cand-con">📍 {lang === 'np' ? c.constituencyNp : c.constituency}</div>
-                            <div className="cand-con muted">{c.province} Province</div>
+                      <div key={c.id} className="cand-row-card" onClick={() => setSelectedCand(c)} style={{ animationDelay: `${i * 0.03}s` }}>
+                        <div className="cand-row-main">
+                          <div className="cand-row-avatar">
+                            <CandidatePhoto candidate={c} party={p} size={58} />
+                          </div>
+                          <div className="cand-row-names">
+                            <div className="cand-name-primary">{lang === 'np' ? c.nameNp || c.name : c.name}</div>
+                            <div className="cand-name-secondary">{lang === 'np' ? c.name : c.nameNp}</div>
+                            {p && (
+                              <div className="cand-row-party">
+                                <PartyLogo party={p} size={18} />
+                                <span>{lang === 'np' ? p.nameNp : p.name}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
-                        <div className="cand-party-row">
-                          {p && (
-                            <>
-                              <PartyLogo party={p} size={26} />
-                              <span className="cand-party-name" style={{ color: p.color }}>{lang === 'np' ? p.nameNp : p.name}</span>
-                            </>
-                          )}
+
+                        <div className="cand-row-badges">
+                          <span className="cand-badge">{lang === 'np' ? c.provinceNp || c.province : c.province}</span>
+                          <span className="cand-badge">{lang === 'np' ? c.constituencyNp || c.constituency : c.constituency}</span>
                         </div>
-                        <div className="cand-notable" style={{ borderLeftColor: p?.color || '#555' }}>
-                          {lang === 'np' ? c.notableNp : c.notable}
+
+                        <div className="cand-row-votes">
+                          <div className="cand-vote-group">
+                            <div className="cand-vote-val">{match ? fmt(match.leadingVotes) : '—'}</div>
+                            <div className="cand-vote-lbl">{L.votes}</div>
+                          </div>
+                          <div className={`cand-status-tag ${match?.status || 'counting'}`}>
+                            {match?.status === 'declared' ? (lang === 'np' ? 'घोषित' : 'Declared') : (lang === 'np' ? 'गणना जारी' : 'Counting')}
+                          </div>
                         </div>
-                        <div className="cand-votes-row">
-                          <span className="cand-votes">
-                            {(() => {
-                              const match = constituencies.find(con => con.leadingCandidate === c.name);
-                              return match ? fmt(match.leadingVotes) : '—';
-                            })()}
-                          </span>
-                          <span className="cand-votes-label">{L.votes}</span>
+
+                        <div className="cand-row-action">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
                         </div>
-                        <a href="#" className="cand-profile-link" onClick={(e) => e.preventDefault()}>
-                          {lang === 'np' ? 'विस्तृत प्रोफाइल →' : 'Full Profile →'}
-                        </a>
                       </div>
                     );
                   })}
@@ -523,9 +557,60 @@ export default function Home() {
 
               <div className="cand-note">
                 📸 {lang === 'np'
-                  ? `उम्मेदवार फोटोहरू UI Avatars बाट। सबै ${3406} उम्मेदवारका लागि निर्वाचन साइट हेर्नुहोस्।`
-                  : `Candidate photos generated by UI Avatars. See all 3,406 candidates on the official election site.`
+                  ? `उम्मेदवारहरूको डेटा लाइभ ECN नतिजाहरूसँग सिङ्क गरिएको छ।`
+                  : `Candidate data is live-synced with current ECN results.`
                 }
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── MODAL ── */}
+        {selectedCand && (
+          <div className="modal-overlay" onClick={() => setSelectedCand(null)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setSelectedCand(null)}>×</button>
+              <div className="modal-header-top">
+                <CandidatePhoto candidate={selectedCand} party={PARTY_BY_ID[selectedCand.partyId]} size={100} />
+                <div className="modal-title-wrap">
+                  <h2>{lang === 'np' ? selectedCand.nameNp : selectedCand.name}</h2>
+                  <p className="modal-subtitle">{lang === 'np' ? selectedCand.name : selectedCand.nameNp}</p>
+                  <div className="modal-party-row">
+                    <PartyLogo party={PARTY_BY_ID[selectedCand.partyId]} size={24} />
+                    <span>{lang === 'np' ? PARTY_BY_ID[selectedCand.partyId]?.nameNp : PARTY_BY_ID[selectedCand.partyId]?.name}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-grid">
+                <div className="modal-stat-box">
+                  <label>{lang === 'np' ? 'प्रदेश' : 'Province'}</label>
+                  <div>{lang === 'np' ? selectedCand.provinceNp || selectedCand.province : selectedCand.province}</div>
+                </div>
+                <div className="modal-stat-box">
+                  <label>{lang === 'np' ? 'निर्वाचन क्षेत्र' : 'Constituency'}</label>
+                  <div>{lang === 'np' ? selectedCand.constituencyNp || selectedCand.constituency : selectedCand.constituency}</div>
+                </div>
+              </div>
+
+              <div className="modal-description">
+                <label>{lang === 'np' ? 'विवरण' : 'Details'}</label>
+                <p>{lang === 'np' ? selectedCand.notableNp : selectedCand.notable}</p>
+              </div>
+
+              <div className="modal-votes-section">
+                <div className="modal-vote-main">
+                  <div className="m-vote-val">
+                    {(() => {
+                      const m = constituencies.find(con => con.leadingCandidate === selectedCand.name || con.leadingCandidateNp === selectedCand.name);
+                      return m ? fmt(m.leadingVotes) : '—';
+                    })()}
+                  </div>
+                  <label>{L.votes}</label>
+                </div>
+                <div className="m-status-wrap">
+                  <span className="live-dot" /> {L.live}
+                </div>
               </div>
             </div>
           </div>
@@ -796,24 +881,67 @@ export default function Home() {
         .sort-note { font-size:.68rem; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-left:auto; }
         .empty-msg { color:var(--muted); text-align:center; padding:40px; font-size:.82rem; }
 
-        /* CANDIDATE GRID */
-        .cand-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:14px; }
-        .cand-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; transition:border-color .2s; animation:fadeUp .35s both; box-shadow:var(--shadow); }
-        .cand-card:hover { border-color:var(--blue); box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); }
-        .cand-card-top { display:flex; align-items:flex-start; gap:12px; }
-        .cand-card-info { flex:1; min-width:0; }
-        .cand-name { font-size:.9rem; font-weight:700; line-height:1.3; }
-        .cand-aka { font-size:.72rem; color:var(--gold); margin-top:1px; }
-        .cand-con { font-size:.7rem; color:var(--muted); margin-top:3px; }
-        .cand-party-row { display:flex; align-items:center; gap:8px; }
-        .cand-party-name { font-size:.74rem; font-weight:600; }
-        .cand-notable { font-size:.74rem; color:var(--muted); border-left:3px solid; padding-left:10px; line-height:1.5; }
-        .cand-votes-row { display:flex; align-items:baseline; gap:6px; }
-        .cand-votes { font-family:'JetBrains Mono',monospace; font-size:1.1rem; font-weight:600; color:var(--gold); }
-        .cand-votes-label { font-size:.68rem; color:var(--muted); }
-        .cand-profile-link { font-size:.7rem; color:var(--blue); font-weight:600; }
-        .cand-profile-link:hover { text-decoration:underline; }
-        .cand-note { margin-top:18px; background:rgba(79,142,247,.06); border:1px solid rgba(79,142,247,.18); border-radius:10px; padding:11px 15px; font-size:.73rem; color:var(--muted); line-height:1.6; }
+        /* SORT BOX */
+        .controls-row { display:flex; flex-direction:column; gap:16px; margin-bottom:16px; }
+        @media(min-width:768px) {
+          .controls-row { flex-direction:row; justify-content:space-between; align-items:flex-start; }
+        }
+        .sort-box { display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); padding:6px 12px; border-radius:8px; box-shadow:var(--shadow); font-size:0.8rem; }
+        .sort-box select { border:none; background:transparent; font-family:inherit; font-size:0.8rem; font-weight:600; color:var(--text); cursor:pointer; outline:none; }
+
+        /* CANDIDATE LIST (Professional Row) */
+        .cand-list { display:flex; flex-direction:column; gap:10px; }
+        .cand-row-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:20px; cursor:pointer; transition:all .2s ease; animation:fadeUp .3s both; box-shadow:var(--shadow); }
+        .cand-row-card:hover { border-color:var(--blue); transform:translateY(-1px); box-shadow:0 8px 12px -3px rgba(0,0,0,0.06); }
+        
+        .cand-row-main { display:flex; align-items:center; gap:16px; flex:2; min-width:200px; }
+        .cand-row-avatar { flex-shrink:0; border-radius:50%; overflow:hidden; border:2px solid var(--border); width:58px; height:58px; }
+        .cand-name-primary { font-size:1rem; font-weight:800; color:var(--text); letter-spacing:-0.01em; }
+        .cand-name-secondary { font-size:0.75rem; color:var(--muted); font-weight:500; }
+        .cand-row-party { display:flex; align-items:center; gap:6px; margin-top:4px; font-size:0.7rem; font-weight:700; color:var(--muted); }
+        
+        .cand-row-badges { flex:1; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+        .cand-badge { background:var(--surface2); color:var(--muted); border:1px solid var(--border); padding:4px 10px; border-radius:6px; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; }
+        
+        .cand-row-votes { flex:1; display:flex; flex-direction:column; align-items:flex-end; gap:4px; min-width:100px; }
+        .cand-vote-group { text-align:right; }
+        .cand-vote-val { font-family:'JetBrains Mono',monospace; font-size:1.1rem; font-weight:800; color:var(--blue); line-height:1; }
+        .cand-vote-lbl { font-size:0.6rem; text-transform:uppercase; color:var(--muted); letter-spacing:0.05em; font-weight:600; }
+        .cand-status-tag { font-size:0.58rem; font-weight:800; text-transform:uppercase; padding:3px 8px; border-radius:4px; letter-spacing:0.06em; }
+        .cand-status-tag.declared { background:rgba(22,163,74,0.12); color:var(--green); }
+        .cand-status-tag.counting { background:rgba(217,119,6,0.12); color:var(--gold); }
+        .cand-row-action { color:var(--border); transition:color .2s; }
+        .cand-row-card:hover .cand-row-action { color:var(--blue); }
+
+        /* MODAL */
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; animation:fadeIn .2s both; }
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+        .modal-content { background:var(--surface); width:100%; max-width:500px; border-radius:24px; padding:32px; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); animation:slideUp .3s ease-out; }
+        @keyframes slideUp { from{transform:translateY(20px); opacity:0;} to{transform:translateY(0); opacity:1;} }
+        .modal-close { position:absolute; top:20px; right:20px; background:var(--surface2); border:none; width:32px; height:32px; border-radius:50%; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:all .2s; }
+        .modal-close:hover { background:var(--border); color:var(--text); }
+        
+        .modal-header-top { display:flex; align-items:center; gap:20px; margin-bottom:24px; }
+        .modal-title-wrap h2 { font-size:1.5rem; font-weight:800; color:var(--text); letter-spacing:-0.02em; }
+        .modal-subtitle { font-size:0.9rem; color:var(--muted); margin-bottom:8px; }
+        .modal-party-row { display:flex; align-items:center; gap:8px; font-weight:700; font-size:0.85rem; color:var(--muted); }
+        
+        .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+        .modal-stat-box { background:var(--surface2); padding:16px; border-radius:12px; border:1px solid var(--border); }
+        .modal-stat-box label { display:block; font-size:0.6rem; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:4px; letter-spacing:0.05em; }
+        .modal-stat-box div { font-weight:700; font-size:0.95rem; color:var(--text); }
+        
+        .modal-description { margin-bottom:24px; }
+        .modal-description label { display:block; font-size:0.6rem; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:8px; }
+        .modal-description p { font-size:0.85rem; line-height:1.6; color:var(--text); }
+        
+        .modal-votes-section { background:var(--blue); color:#fff; padding:24px; border-radius:16px; display:flex; justify-content:space-between; align-items:center; }
+        .modal-vote-main { display:flex; flex-direction:column; }
+        .m-vote-val { font-family:'JetBrains Mono',monospace; font-size:2.2rem; font-weight:800; line-height:1; }
+        .modal-vote-main label { font-size:0.7rem; text-transform:uppercase; opacity:0.8; font-weight:700; margin-top:4px; }
+        .m-status-wrap { display:flex; align-items:center; gap:8px; font-weight:700; font-size:0.85rem; background:rgba(255,255,255,0.15); padding:8px 16px; border-radius:99px; }
+
+        .cand-note { margin-top:24px; font-size:.73rem; color:var(--muted); text-align:center; }
         .cand-note a { color:var(--blue); }
 
         /* NEWS */
