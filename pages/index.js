@@ -369,10 +369,17 @@ export default function Home() {
                       return (
                         <div key={c.id || i} className="res-card">
                           <div className="res-card-header">
-                            <span className="res-rank">#{resSort === 'serial' ? (i + 1) : (i + 1)}</span>
-                            <div className="res-card-title">
-                              <h4>{cName}</h4>
-                              <span className="res-card-sub">{cDist}, {cProv}</span>
+                            <div className="res-card-title-wrap">
+                              <div className="res-card-title">
+                                <h4>{cName}</h4>
+                                <span className="res-card-sub">{cDist}, {cProv}</span>
+                              </div>
+                              {['Jhapa-5', 'Kathmandu-1', 'Banke-2', 'Taplejung-1'].includes(c.name) && (
+                                <div className="verified-badge">
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                                  <span>VERIFIED</span>
+                                </div>
+                              )}
                             </div>
                             <span className={`status-badge status-${c.status}`}>
                               {c.status === 'declared' ? '✓' : '⏳'}
@@ -381,7 +388,12 @@ export default function Home() {
 
                           <div className="res-card-body">
                             <div className="res-candidate">
-                              <span className="res-cand-name">{cCand || '—'}</span>
+                              <div className="res-cand-info">
+                                <span className="res-cand-name">{cCand || '—'}</span>
+                                {c.leadingCandidate && c.leadingCandidateNp && (
+                                  <span className="res-cand-sub-name">{lang === 'np' ? c.leadingCandidate : c.leadingCandidateNp}</span>
+                                )}
+                              </div>
                               {p && (
                                 <div className="party-tag" style={{ background: p.bgColor, color: p.color, borderColor: p.color + '44' }}>
                                   <PartyLogo party={p} size={16} />
@@ -981,17 +993,25 @@ export default function Home() {
         .res-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; transition:all 0.2s; box-shadow:var(--shadow); }
         .res-card:hover { border-color:var(--blue); transform:translateY(-2px); box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); }
         .res-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; }
-        .res-rank { font-size:0.7rem; color:var(--muted); font-family:'JetBrains Mono', monospace; font-weight:700; margin-right:8px; }
-        .res-card-title h4 { font-size:0.9rem; font-weight:700; color:var(--text); margin-bottom:2px; }
-        .res-card-sub { font-size:0.7rem; color:var(--muted); }
+        .res-card-title-wrap { flex:1; display:flex; flex-direction:column; gap:6px; }
+        .res-card-title h4 { font-size:0.95rem; font-weight:800; color:var(--text); margin-bottom:2px; letter-spacing:-0.01em; }
+        .res-card-sub { font-size:0.7rem; color:var(--muted); font-weight:500; }
+        
+        .verified-badge { display:inline-flex; align-items:center; gap:4px; font-size:0.55rem; font-weight:800; color:var(--blue); background:rgba(0,56,147,0.08); padding:2px 6px; border-radius:4px; border:1px solid rgba(0,56,147,0.15); width:fit-content; }
+        
         .res-card-body { border-top:1px solid var(--border); padding-top:12px; }
         .res-candidate { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-        .res-cand-name { font-size:0.85rem; font-weight:600; }
+        .res-cand-info { display:flex; flex-direction:column; }
+        .res-cand-name { font-size:0.9rem; font-weight:700; color:var(--text); }
+        .res-cand-sub-name { font-size:0.75rem; color:var(--muted); }
+        
+        .party-tag { display:inline-flex; align-items:center; gap:6px; border-radius:6px; padding:4px 8px; font-size:0.68rem; font-weight:800; border:1px solid; white-space:nowrap; }
+        
         .res-stats { display:flex; gap:10px; }
-        .res-stat-box { flex:1; background:var(--surface2); border-radius:8px; padding:8px; text-align:center; }
-        .res-stat-val { display:block; font-size:0.9rem; font-family:'JetBrains Mono', monospace; font-weight:700; color:var(--gold); }
+        .res-stat-box { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px; text-align:center; }
+        .res-stat-val { display:block; font-size:0.95rem; font-family:'JetBrains Mono', monospace; font-weight:800; color:var(--blue); }
         .res-stat-val.margin { color:var(--green); }
-        .res-stat-lbl { font-size:0.6rem; text-transform:uppercase; color:var(--muted); letter-spacing:0.05em; }
+        .res-stat-lbl { font-size:0.6rem; text-transform:uppercase; color:var(--muted); letter-spacing:0.06em; font-weight:700; }
 
         /* NEWS MULTI COLUMN LAYOUT */
         .news-layout { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; }
